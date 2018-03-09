@@ -15,7 +15,6 @@ use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEvent as Event;
 use Phergie\Irc\Event\UserEventInterface as UserEvent;
-use Freestyledork\Phergie\Plugin\Authentication\nickAuth as Auth;
 /**
  * Plugin class.
  *
@@ -24,7 +23,6 @@ use Freestyledork\Phergie\Plugin\Authentication\nickAuth as Auth;
  */
 class Plugin extends AbstractPlugin
 {
-
     /**
      * Name of the NickServ agent
      *
@@ -34,7 +32,7 @@ class Plugin extends AbstractPlugin
     /**
      * irc Nicks to be authenticated
      *
-     * @var array string
+     * @var array $nickAuth obj
      */
     protected $authNicks = [];
 
@@ -86,7 +84,14 @@ class Plugin extends AbstractPlugin
         $getValues['getUsername']      = $event->getUsername();
         $getValues['getCustomParams']  = $event->getCustomParams();
 
-        //print_r($getValues);
+        $nick = $event->getNick();
+        $userMask = sprintf('%s!%s@%s',
+            $nick,
+            $event->getUsername(),
+            $event->getHost()
+        );
+
+        print_r($userMask);
         // end debug info
 
         $queue->ircPrivmsg($event->getSource(), "auth attempt received" );
@@ -100,10 +105,11 @@ class Plugin extends AbstractPlugin
             $queue->ircPrivmsg('#FSDChannel', "Command Pending for {$nick}. Please try again in a few seconds.");
         }
 
-        $this->authNicks[$nick]['acc'] = null;
-        $this->authNicks[$nick]['account'] = null;
-        $this->authNicks[$nick]['time'] = time(); // used to purge old bad entries
-        $this->authNicks[$nick]['event'] = $event;
+//        $this->authNicks[$nick]['acc'] = null;
+//        $this->authNicks[$nick]['account'] = null;
+//        $this->authNicks[$nick]['time'] = time(); // used to purge old bad entries
+//        $this->authNicks[$nick]['event'] = $event;
+        $this->authNicks[$nick] = new nickAuth($event,$nick);
 //        $this->authNicks[$nick]['command'] = null; // used once name is verified
         //print_r($this->authNicks);
 
@@ -155,7 +161,7 @@ class Plugin extends AbstractPlugin
         // handle nick status
         if (preg_match($acc, $message,$accInfo)) {
             //$queue->ircPrivmsg('#FSDChannel', $accInfo['nick'] . ' is: '. $accInfo['value'] );
-            $this->authNicks[$accInfo['nick']]['acc'] = $accInfo['value'];
+            $this->authNicks[$accInfo['nick']]->acc = $accInfo['value'];
             //print_r($accInfo);
             return;
         }
@@ -163,14 +169,14 @@ class Plugin extends AbstractPlugin
         // handle registered names
         if (preg_match($account, $message,$accountInfo)) {
             //$queue->ircPrivmsg('#FSDChannel', 'Account is: '. $accountInfo['account'] );
-            $this->authNicks[$accountInfo['nick']]['account'] = $accountInfo['account'];
+            $this->authNicks[$accountInfo['nick']]->account = $accountInfo['account'];
             //print_r($accountInfo);
         }
 
         // look for names that are not registered
         if(preg_match($notRegistered, $message,$accountInfo)){
             //$queue->ircPrivmsg('#FSDChannel', 'No Account for: '. $accountInfo['nick'] );
-            $this->authNicks[$accountInfo['nick']]['account'] = 'Not Registered';
+            $this->authNicks[$accountInfo['nick']]->account = 'Not Registered';
             //print_r($accountInfo);
         }
 
@@ -183,39 +189,39 @@ class Plugin extends AbstractPlugin
         foreach ($this->authNicks as $nick => $authNick){
             //print_r($authNick);
             // purge unprocessed entries older then 30 seconds.
-            if (time() - $authNick['time'] >= 30) {
+            if (time() - $authNick->time >= 30) {
                 unset($this->authNicks[$nick]);
                 continue;
             }
             //probably redundant check
-            if ($authNick['acc'] === null || $authNick['account'] === null){
+            if ($authNick->acc === null || $authNick->account === null){
                 continue;
             }
-            if ($authNick['acc'] == 0 && $authNick['account'] === "Not Registered"){
+            if ($authNick->acc == 0 && $authNick->account === "Not Registered"){
                 $queue->ircPrivmsg('#FSDChannel', "No Account for: {$nick}" );
                 unset($this->authNicks[$nick]);
                 continue;
             }
-            if ($authNick['acc'] == 0){
-                $queue->ircPrivmsg('#FSDChannel', "{$nick} is registered to {$authNick['account']} but is not in use." );
+            if ($authNick->acc == 0){
+                $queue->ircPrivmsg('#FSDChannel', "{$nick} is registered to {$authNick->account} but is not in use." );
                 unset($this->authNicks[$nick]);
                 continue;
             }
-            if ($authNick['acc'] == 1){
-                $queue->ircPrivmsg('#FSDChannel', "{$nick} is registered to {$authNick['account']} but not logged in." );
+            if ($authNick->acc == 1){
+                $queue->ircPrivmsg('#FSDChannel', "{$nick} is registered to {$authNick->account} but not logged in." );
                 unset($this->authNicks[$nick]);
                 continue;
             }
-            if ($authNick['acc'] == 2){
-                $queue->ircPrivmsg('#FSDChannel', "{$nick} is registered to {$authNick['account']} and recognized." );
+            if ($authNick->acc == 2){
+                $queue->ircPrivmsg('#FSDChannel', "{$nick} is registered to {$authNick->account} and recognized." );
                 unset($this->authNicks[$nick]);
                 continue;
             }
-            if ($authNick['acc'] == 3){
-                $queue->ircPrivmsg('#FSDChannel', "{$nick} is registered to {$authNick['account']} and logged in." );
-                $something = new nickAuth();
+            if ($authNick->acc == 3){
+                $queue->ircPrivmsg('#FSDChannel', "{$nick} is registered to {$authNick->account} and logged in." );
                 //$array['message'] = "event EMIT SUCCESS";
-                $this->getEventEmitter()->emit('command.callback', [$authNick['event'], $queue, $something]);
+                $authNick->valid = true;
+                $this->getEventEmitter()->emit('command.callback', [$authNick->event, $queue, $authNick]);
                 unset($this->authNicks[$nick]);
                 continue;
             }
@@ -223,6 +229,16 @@ class Plugin extends AbstractPlugin
     }
 }
 class nickAuth{
-    public $nick = 'somethingunknown';
-    public $valid = true;
+    public $acc = null;
+    public $account = null;
+    public $nick = null;
+    public $time = null;
+    public $event = null;
+    public $valid = null;
+
+    public function __construct($event, $nick){
+        $this->event = $event;
+        $this->nick = $nick;
+        $this->time = time();
+    }
 }

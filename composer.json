@@ -6,12 +6,14 @@
         "chrismou/phergie-irc-plugin-react-dice": "^2.0",
         "phergie/phergie-irc-plugin-react-quit": "^2.0",
         "phergie/phergie-irc-plugin-react-commandhelp": "^2.1",
-        "phergie/phergie-irc-plugin-react-nickserv": "^2.0"
+        "phergie/phergie-irc-plugin-react-nickserv": "^2.0",
+        "phergie/phergie-irc-plugin-react-eventfilter": "^2.0"
     },
     "autoload": {
         "psr-4": {
             "Freestyledork\\Phergie\\Plugin\\Authentication\\": "vendor/freestyledork/phergie-irc-plugin-react-authentication/src",
             "Freestyledork\\Phergie\\Plugin\\CallbackTest\\": "vendor/freestyledork/phergie-irc-plugin-react-callbacktest/src",
+            "Freestyledork\\Phergie\\Plugin\\Coins\\": "vendor/freestyledork/phergie-irc-plugin-react-coins/src",
             "EnebeNb\\Phergie\\Plugin\\Tell\\": "vendor/phergie/phergie-irc-plugin-react-tell/src"
         }
     }
