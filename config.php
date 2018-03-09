@@ -13,29 +13,53 @@ use Freestyledork\Phergie\Plugin\Coins\BetPlugin;
 use Freestyledork\Phergie\Plugin\Authentication\Plugin as AuthPlugin;
 use Freestyledork\Phergie\Plugin\CallbackTest\Plugin as CallbackPlugin;
 
-
+$prefix      = '!';
 $credentials = json_decode(file_get_contents("credentials.json"),true);
-$pdoConnStr  = "mysql:dbname={$credentials['databaseInfo']['dbName']};host={$credentials['databaseInfo']['ip']}";
-$pdoUser     = $credentials['databaseInfo']['user'];
-$pdoPass     = $credentials['databaseInfo']['pass'];
+
+/**********************************************************
+ * Database Info
+ *********************************************************/
+$dbIp       = $credentials['databaseInfo']['ip'];
+$dbName     = $credentials['databaseInfo']['dbName'];
+$dbUser     = $credentials['databaseInfo']['user'];
+$dbPass     = $credentials['databaseInfo']['pass'];
+$dbConnStr  = "mysql:dbname={$dbName};host={$dbIp}";
+$database   = new PDO($dbConnStr, $dbUser, $dbPass);
+
+/**********************************************************
+ * Connection Info
+ *********************************************************/
+$ircChannels = $credentials['ircChannels'];
 $ircNick     = $credentials['botID']['nick'];
 $ircPass     = $credentials['botID']['pass'];
-$database    = new PDO($pdoConnStr, $pdoUser, $pdoPass);
-$connection  = new Connection(['serverHostname' => 'irc.freenode.net','username' => $ircNick,'realname' => $ircNick,'nickname' => $ircNick]);
-$prefix      = '!';
-$filterUser  = preg_quote('freestyledork!~freestyle@unaffiliated/freestyledork','/');
+$connection  = new Connection(['serverHostname' => 'irc.freenode.net',
+    'username' => $ircNick,'realname' => $ircNick,'nickname' => $ircNick]);
+
+/**********************************************************
+ * Plugins Info
+ *********************************************************/
 $nickServ    = new NickServPlugin(array('password' => $ircPass));
 $command     = new CommandPlugin(['prefix' => $prefix]);
-$autoJoin    = new AutoJoinPlugin(['channels' => array('#FSDChannel'),'wait-for-nickserv' => true]);
+$autoJoin    = new AutoJoinPlugin(['channels' => $ircChannels,'wait-for-nickserv' => true]);
 $auth        = new AuthPlugin();
 $callback    = new CallbackPlugin();
 $coins       = new CoinsPlugin(['database' => $database]);
 $bet         = new BetPlugin(['database' => $database]);
 $quit        = new QuitPlugin(['message' => 'because %s said so']);
-$eventFilter = new EventFilterPlugin(['filter' => new Filters\UserFilter([$filterUser]),'plugins' => [$quit]]);
 
+/**********************************************************
+ * Event Filter Info
+ *********************************************************/
+$quitUsers   = $credentials['quitUsers'];
+foreach ($quitUsers as $key => $quitUser){
+    $quitUsers[$key] =  preg_quote($quitUser,'/');
+}
+$quitFilter = new Filters\UserFilter($quitUsers);
+$quitEventFilter = new EventFilterPlugin(['filter' => $quitFilter,'plugins' => [$quit]]);
 
-
+/**********************************************************
+ * Response
+ *********************************************************/
 return array(
     // Plugins to include for all connections
     'plugins' => array(
@@ -44,7 +68,7 @@ return array(
         $nickServ,
         $auth,
         $callback,
-        $eventFilter,
+        $quitEventFilter,
         $coins,
         $bet
     ),
