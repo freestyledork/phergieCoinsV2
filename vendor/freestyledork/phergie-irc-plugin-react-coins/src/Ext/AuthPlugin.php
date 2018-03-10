@@ -6,19 +6,13 @@
  * @package Freestyledork\Phergie\Plugin\Coins\Ext
  */
 
-
 namespace Freestyledork\Phergie\Plugin\Coins\Ext;
 
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEvent as Event;
 use Phergie\Irc\Event\UserEventInterface as UserEvent;
-/**
- * Plugin class.
- *
- * @category Phergie
- * @package Phergie\Irc\Plugin\React\Authentication
- */
+
 class AuthPlugin extends AbstractPlugin
 {
     /**
