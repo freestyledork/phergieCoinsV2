@@ -15,7 +15,7 @@ use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEvent as Event;
 use Phergie\Irc\Event\UserEventInterface as UserEvent;
-use Freestyledork\Phergie\Plugin\Authentication\nickAuth as Auth;
+use Freestyledork\Phergie\Plugin\Coins\Ext\nickAuth as Auth;
 
 
 /**
@@ -65,7 +65,7 @@ class Plugin extends AbstractPlugin
             $queue->ircPrivmsg('#FSDChannel', "callback started." );
             $this->getEventEmitter()->emit('command.auth', [$event, $queue]);
         }elseif($valid->valid == true){
-                $queue->ircPrivmsg('#FSDChannel', "callback valid. {$valid->nick}" );
+            $queue->ircPrivmsg('#FSDChannel', "callback valid. {$valid->nick}" );
         }
     }
 }

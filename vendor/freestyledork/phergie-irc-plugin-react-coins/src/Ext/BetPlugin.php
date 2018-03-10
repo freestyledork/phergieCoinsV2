@@ -1,14 +1,18 @@
 <?php
 /**
- * @package Custom\Phergie\Plugin\Coins
+ * Plugin for users betting coins
+ *
+ * @category Phergie
+ * @package Freestyledork\Phergie\Plugin\Coins\Ext
  */
 
-namespace Freestyledork\Phergie\Plugin\Coins;
+namespace Freestyledork\Phergie\Plugin\Coins\Ext;
 
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Event\UserEventInterface;
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as Event;
+use Freestyledork\Phergie\Plugin\Coins\Db;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 //use Freestyledork\Phergie\Plugin\Coins\Helper\Helper;
@@ -16,12 +20,7 @@ use Phergie\Irc\Event\UserEventInterface as UserEvent;
 use Phergie\Irc\Event\ServerEventInterface as ServerEvent;
 use Freestyledork\Phergie\Plugin\Authentication as Auth;
 
-/**
- * Plugin for users collecting coins
- *
- * @category Phergie
- * @package Custom\Phergie\Plugin\Coins
- */
+
 class BetPlugin extends AbstractPlugin
 {
     /**
@@ -31,6 +30,15 @@ class BetPlugin extends AbstractPlugin
      */
     protected $commandEvents = [
         'command.bet'         => 'betCommand',
+    ];
+
+    /**
+     * Array of callback events to listen.
+     *
+     * @var array
+     */
+    protected $callbackEvents = [
+        'coins.callback.bet'         => 'coinsCallback'
     ];
 
 
@@ -65,7 +73,8 @@ class BetPlugin extends AbstractPlugin
     public function getSubscribedEvents()
     {
         return array_merge(
-            $this->commandEvents
+            $this->commandEvents,
+            $this->callbackEvents
         );
     }
 
@@ -78,14 +87,14 @@ class BetPlugin extends AbstractPlugin
      */
     public function betCommand(Event $event, Queue $queue)
     {
-        $logger = $this->getLogger();
+        $logger = $this->logger;
         $logger->info('Command received',['COMMAND' => $event->getCommand()]);
         $nick = $event->getNick();
         $queue->ircNotice($nick, 'Bet Command Started. (WIP)');
     }
-    public function Testing()
+    public function coinsCallback()
     {
-        $logger = $this->getLogger();
-        $logger->info('Command received',['COMMAND' => 'betCallback']);
+        $logger =  $this->logger;
+        $logger->info('Event received',['Callback' => 'betCallback']);
     }
 }

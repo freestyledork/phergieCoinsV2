@@ -1,15 +1,13 @@
 <?php
 /**
- * Phergie plugin for checking user authentication with nickserv ()
+ * Phergie plugin for checking user authentication with nickserv
  *
- * @link https://github.com/phergie/phergie-irc-plugin-react-currency for the canonical source repository
- * @copyright Copyright (c) 2017 Mike (http://phergie.org)
- * @license http://phergie.org/license Simplified BSD License
- * @package Phergie\Irc\Plugin\React\Testing
+ * @category Phergie
+ * @package Freestyledork\Phergie\Plugin\Coins\Ext
  */
 
 
-namespace Freestyledork\Phergie\Plugin\Authentication;
+namespace Freestyledork\Phergie\Plugin\Coins\Ext;
 
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
@@ -21,7 +19,7 @@ use Phergie\Irc\Event\UserEventInterface as UserEvent;
  * @category Phergie
  * @package Phergie\Irc\Plugin\React\Authentication
  */
-class Plugin extends AbstractPlugin
+class AuthPlugin extends AbstractPlugin
 {
     /**
      * Name of the NickServ agent
@@ -29,7 +27,6 @@ class Plugin extends AbstractPlugin
      * @var string
      */
     protected $botNick = 'NickServ';
-
     /**
      * irc Nicks to be authenticated
      *

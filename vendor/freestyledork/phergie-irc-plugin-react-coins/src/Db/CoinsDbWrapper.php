@@ -1,16 +1,13 @@
 <?php
 /**
- * @package Freestyledork\Phergie\Plugin\Coins\Db
- */
-namespace Freestyledork\Phergie\Plugin\Coins\Db;
-
-/**
  * Handles database communication in Freestyledork\Phergie\Plugin\Coins Plugin
  * using a PDO database as storage method.
  *
  * @category Phergie
  * @package Freestyledork\Phergie\Plugin\Coins\Db
  */
+namespace Freestyledork\Phergie\Plugin\Coins\Db;
+
 class CoinsDbWrapper
 {
     /**
@@ -31,6 +28,10 @@ class CoinsDbWrapper
     public function __construct(array $config = [])
     {
         $this->connection = $config['database'];
+    }
+
+    public function dbTest(){
+        return 'dbTestSuccess!!';
     }
 
 }

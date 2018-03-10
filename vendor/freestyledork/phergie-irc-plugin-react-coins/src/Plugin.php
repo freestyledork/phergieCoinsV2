@@ -7,7 +7,6 @@ namespace Freestyledork\Phergie\Plugin\Coins;
 
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
-use Phergie\Irc\Event\UserEventInterface;
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as Event;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
@@ -34,6 +33,15 @@ class Plugin extends AbstractPlugin
         'command.coins.help'    => 'coinsHelpCommand',
         'command.test'          => 'testCommand',
         'command.worth'         => 'worthCommand'
+    ];
+
+    /**
+     * Array of callback events to listen.
+     *
+     * @var array
+     */
+    protected $callbackEvents = [
+        'coins.callback.coins'         => 'coinsCallback'
     ];
 
 
@@ -68,19 +76,20 @@ class Plugin extends AbstractPlugin
     public function getSubscribedEvents()
     {
         return array_merge(
-            $this->commandEvents
+            $this->commandEvents,
+            $this->callbackEvents
         );
     }
 
     public function testCommand(Event $event, Queue $queue)
     {
-        call_user_func(['Freestyledork\Phergie\Plugin\Coins\BetPlugin','Testing']);
+        $this->emitter->emit('coins.callback.coins', [$event, $queue]);
     }
 
-    public function Testing()
+    public function coinsCallback(Event $event, Queue $queue)
     {
-        $logger = $this->getLogger();
-        $logger->info('Command received',['COMMAND' => 'callback']);
+        $logger = $this->logger;
+        $logger->info('Event received',['Callback' => $event->getCustomCommand()]);
     }
     /**
      * Handles coin command calls
