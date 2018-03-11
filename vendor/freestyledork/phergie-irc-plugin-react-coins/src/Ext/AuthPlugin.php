@@ -41,7 +41,7 @@ class AuthPlugin extends AbstractPlugin
     }
 
     /**
-     *
+     * Array of Authentication events to listen for.
      *
      * @return array
      */
@@ -49,7 +49,7 @@ class AuthPlugin extends AbstractPlugin
     {
         return [
             'coins.callback.auth' => 'startAuthentication',
-            'irc.received.notice'   => 'handleNotice',
+            'irc.received.notice' => 'handleNotice',
         ];
     }
 
@@ -100,6 +100,7 @@ class AuthPlugin extends AbstractPlugin
             return;
         }
 
+        /** TODO: possibly find better solution to remove formatting. */
         $params = $event->getParams();
         $message = strtolower($params['text']);
         $message = strip_tags($message);
@@ -131,6 +132,9 @@ class AuthPlugin extends AbstractPlugin
         $this->returnCallbacks();
     }
 
+    /**
+     * After authentication is completed, emit callback event
+     */
     protected function returnCallbacks()
     {
         foreach ($this->authCallbacks as $nick => $callback) {

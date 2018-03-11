@@ -5,18 +5,10 @@
 
 namespace Freestyledork\Phergie\Plugin\Coins;
 
-use Evenement\EventEmitter;
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
-use Phergie\Irc\Plugin\React\Command\CommandEvent;
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as Event;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerInterface;
-//use Freestyledork\Phergie\Plugin\Coins\Helper\Helper;
-use Phergie\Irc\Event\UserEventInterface as UserEvent;
-use Phergie\Irc\Event\ServerEventInterface as ServerEvent;
-use Freestyledork\Phergie\Plugin\Authentication as Auth;
-use Freestyledork\Phergie\Plugin\Coins\CommandCallback as Callback;
+
 
 /**
  * Plugin for users collecting coins
@@ -32,7 +24,7 @@ class Plugin extends AbstractPlugin
      * @var array
      */
     protected $commandEvents = [
-        'command.coins'         => 'coinCommand',
+        'command.coins'         => 'coinsCommand',
         'command.coins.help'    => 'coinsHelpCommand',
         'command.test'          => 'testCommand',
         'command.worth'         => 'worthCommand'
@@ -48,9 +40,11 @@ class Plugin extends AbstractPlugin
         'coins.callback.test'  => 'testCallback'
     ];
 
-
-    protected $commandQueue = [];
-
+    /**
+     * Database Wrapper for basic coins info
+     *
+     * @var Db\CoinsDbWrapper
+     */
     protected $coinsDbWrapper;
 
     /**
@@ -97,7 +91,7 @@ class Plugin extends AbstractPlugin
 
         $callback = new CommandCallback($event,$queue ,$nick);
 
-        $this->getEventEmitter()->emit('coins.callback.auth',[$event,$queue,$callback]);
+        $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$event,$queue,$callback]);
     }
 
     /**
@@ -107,31 +101,23 @@ class Plugin extends AbstractPlugin
      */
     public function testCallback(CommandCallback $callback)
     {
-        $callback->eventQueue->ircNotice("#FSDChannel",'Callback success');
+        $source = $callback->commandEvent->getSource();
+        $callback->eventQueue->ircNotice($source,'Callback success');
+
+        //debug
         echo "\r\n";
         print_r($callback->user);
         echo "\r\n";
     }
 
     /**
-     * @param Event $event
-     * @param Queue $queue
-     */
-    public function coinsCallback(CommandCallback $callback)
-    {
-        $this->getLogger()->info(
-            'Event received',
-            ['CommandCallback' => $callback->commandEvent->getCustomCommand()]
-        );
-    }
-
-    /**
      * Handles coin command calls
+     * @see coinsCallback()
      *
      * @param Event $event
      * @param Queue $queue
      */
-    public function coinCommand(Event $event, Queue $queue)
+    public function coinsCommand(Event $event, Queue $queue)
     {
         $this->getLogger()->info(
             'Command received',
@@ -139,7 +125,27 @@ class Plugin extends AbstractPlugin
         );
 
         $nick = $event->getNick();
+        $nick = strtolower($nick);
+        $callback = new CommandCallback($event,$queue ,$nick);
         $queue->ircNotice($nick, 'Coin Command Started. (WIP)');
+        $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$event,$queue,$callback]);
+
+    }
+
+    /**
+     * Finishes coin Callback
+     *
+     * @param Event $event
+     * @param Queue $queue
+     */
+    public function coinsCallback(CommandCallback $callback)
+    {
+        $source = $callback->commandEvent->getSource();
+        $callback->eventQueue->ircNotice($source,'Callback success');
+        $this->getLogger()->info(
+            'Event received',
+            ['CommandCallback' => $callback->commandEvent->getCustomCommand()]
+        );
     }
 
     /**

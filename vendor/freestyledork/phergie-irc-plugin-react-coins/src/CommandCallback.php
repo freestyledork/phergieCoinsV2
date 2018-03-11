@@ -13,9 +13,30 @@ use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 
 class CommandCallback
 {
+    /**
+     * Holds the source event
+     *
+     * @var Event $commandEvent
+     */
     public $commandEvent;
+
+    /**
+     * @var Queue
+     */
     public $eventQueue;
+
+    /**
+     * Info about the user to be used later
+     *
+     * @var User
+     */
     public $user;
+
+    /**
+     * Callback creation time
+     *
+     * @var int
+     */
     public $time;
 
     public function __construct(Event $commandEvent, Queue $queue, $nick){
@@ -25,10 +46,18 @@ class CommandCallback
         $this->eventQueue = $queue;
     }
 
+    /**
+     * @return User
+     */
     public function getUser(){
         return $this->user;
     }
 
+    /**
+     * Gets the event to emit on successful callback
+     *
+     * @return string
+     */
     public function getCallbackEvent()
     {
         $prefix = 'coins.callback.';
@@ -36,6 +65,11 @@ class CommandCallback
         return $prefix.$command;
     }
 
+    /**
+     * Gets the authentication event name
+     *
+     * @return string
+     */
     public function getAuthCallbackEventName(){
         return 'coins.callback.auth';
     }
