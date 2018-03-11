@@ -1,0 +1,15 @@
+.git/*
+.idea/*
+!/vendor/freestyledork/*
+/vendor/bin/*
+/vendor/chrismou/*
+/vendor/composer/*
+/vendor/evenement/*
+/vendor/monolog/*
+/vendor/phergie/*
+/vendor/psr/*
+/vendor/react/*
+/log/*
+/credentials.json
+/composer.lock
+/vendor/autoload.php
