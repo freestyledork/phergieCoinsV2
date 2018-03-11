@@ -48,7 +48,7 @@ class AuthPlugin extends AbstractPlugin
     public function getSubscribedEvents()
     {
         return [
-            'coins.callback.auth' => 'authInit',
+            'coins.callback.auth' => 'startAuthentication',
             'irc.received.notice'   => 'handleNotice',
         ];
     }
@@ -58,7 +58,7 @@ class AuthPlugin extends AbstractPlugin
      * @param Queue $queue
      * @param CommandCallback $callback
      */
-    public function authInit(Event $event, Queue $queue, CommandCallback $callback)
+    public function startAuthentication(Event $event, Queue $queue, CommandCallback $callback)
     {
         $nick = $callback->user->nick;
         $queue->ircPrivmsg($event->getSource(), "auth attempt received {$nick}" );

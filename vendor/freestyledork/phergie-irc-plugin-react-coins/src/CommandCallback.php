@@ -18,10 +18,10 @@ class CommandCallback
     public $user;
     public $time;
 
-    public function __construct(Event $commandEvent, Queue $queue, User $user){
+    public function __construct(Event $commandEvent, Queue $queue, $nick){
+        $this->user = new User($nick);
         $this->time = time();
         $this->commandEvent = $commandEvent;
-        $this->user = $user;
         $this->eventQueue = $queue;
     }
 
@@ -34,5 +34,9 @@ class CommandCallback
         $prefix = 'coins.callback.';
         $command = $this->commandEvent->getCustomCommand();
         return $prefix.$command;
+    }
+
+    public function getAuthCallbackEventName(){
+        return 'coins.callback.auth';
     }
 }

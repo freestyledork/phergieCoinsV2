@@ -91,12 +91,11 @@ class Plugin extends AbstractPlugin
      */
     public function testCommand(Event $event, Queue $queue)
     {
+        // allow passable nick for testing
         $nick = $event->getCustomParams()[0];
         $nick = strtolower($nick);
 
-        $user = new User($nick);
-
-        $callback = new CommandCallback($event,$queue ,$user);
+        $callback = new CommandCallback($event,$queue ,$nick);
 
         $this->getEventEmitter()->emit('coins.callback.auth',[$event,$queue,$callback]);
     }
