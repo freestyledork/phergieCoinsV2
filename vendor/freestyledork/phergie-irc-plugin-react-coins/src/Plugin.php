@@ -73,8 +73,6 @@ class Plugin extends AbstractPlugin
     }
 
     /**
-     * Indicates that the plugin monitors PART and KICK events.
-     *
      * @return array
      */
     public function getSubscribedEvents()
@@ -85,13 +83,14 @@ class Plugin extends AbstractPlugin
         );
     }
 
+    /**
+     * Used for testing commands with callback.
+     *
+     * @param Event $event
+     * @param Queue $queue
+     */
     public function testCommand(Event $event, Queue $queue)
     {
-//        $this->emitter->emit('coins.callback.coins', [$event, $queue]);
-//
-
-        $queue->ircNotice('#FSDChannel', 'queue2');
-        $queue->ircNotice("freestyledork",'private');
         $nick = $event->getCustomParams()[0];
         $nick = strtolower($nick);
 
@@ -102,9 +101,10 @@ class Plugin extends AbstractPlugin
         $this->getEventEmitter()->emit('coins.callback.auth',[$event,$queue,$callback]);
     }
 
-
-    /*
+    /**
      * Handles the testCommand CommandCallback response
+     *
+     * @param CommandCallback $callback
      */
     public function testCallback(CommandCallback $callback)
     {
@@ -112,14 +112,20 @@ class Plugin extends AbstractPlugin
         echo "\r\n";
         print_r($callback->user);
         echo "\r\n";
-
     }
 
-    public function coinsCallback(Event $event, Queue $queue)
+    /**
+     * @param Event $event
+     * @param Queue $queue
+     */
+    public function coinsCallback(CommandCallback $callback)
     {
-        $logger = $this->logger;
-        $logger->info('Event received',['CommandCallback' => $event->getCustomCommand()]);
+        $this->getLogger()->info(
+            'Event received',
+            ['CommandCallback' => $callback->commandEvent->getCustomCommand()]
+        );
     }
+
     /**
      * Handles coin command calls
      *
@@ -128,8 +134,11 @@ class Plugin extends AbstractPlugin
      */
     public function coinCommand(Event $event, Queue $queue)
     {
-        $logger = $this->getLogger();
-        $logger->info('Command received',['COMMAND' => $event->getCommand()]);
+        $this->getLogger()->info(
+            'Command received',
+            ['COMMAND' => $event->getCustomCommand()]
+        );
+
         $nick = $event->getNick();
         $queue->ircNotice($nick, 'Coin Command Started. (WIP)');
     }
