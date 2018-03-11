@@ -95,6 +95,6 @@ class BetPlugin extends AbstractPlugin
     public function coinsCallback()
     {
         $logger =  $this->logger;
-        $logger->info('Event received',['Callback' => 'betCallback']);
+        $logger->info('Event received',['CommandCallback' => 'betCallback']);
     }
 }

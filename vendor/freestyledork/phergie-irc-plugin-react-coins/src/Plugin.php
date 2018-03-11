@@ -5,8 +5,10 @@
 
 namespace Freestyledork\Phergie\Plugin\Coins;
 
+use Evenement\EventEmitter;
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
+use Phergie\Irc\Plugin\React\Command\CommandEvent;
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as Event;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
@@ -14,6 +16,7 @@ use Psr\Log\LoggerInterface;
 use Phergie\Irc\Event\UserEventInterface as UserEvent;
 use Phergie\Irc\Event\ServerEventInterface as ServerEvent;
 use Freestyledork\Phergie\Plugin\Authentication as Auth;
+use Freestyledork\Phergie\Plugin\Coins\CommandCallback as Callback;
 
 /**
  * Plugin for users collecting coins
@@ -41,7 +44,8 @@ class Plugin extends AbstractPlugin
      * @var array
      */
     protected $callbackEvents = [
-        'coins.callback.coins'         => 'coinsCallback'
+        'coins.callback.coins' => 'coinsCallback',
+        'coins.callback.test'  => 'testCallback'
     ];
 
 
@@ -83,13 +87,38 @@ class Plugin extends AbstractPlugin
 
     public function testCommand(Event $event, Queue $queue)
     {
-        $this->emitter->emit('coins.callback.coins', [$event, $queue]);
+//        $this->emitter->emit('coins.callback.coins', [$event, $queue]);
+//
+
+        $queue->ircNotice('#FSDChannel', 'queue2');
+        $queue->ircNotice("freestyledork",'private');
+        $nick = $event->getCustomParams()[0];
+        $nick = strtolower($nick);
+
+        $user = new User($nick);
+
+        $callback = new CommandCallback($event,$queue ,$user);
+
+        $this->getEventEmitter()->emit('coins.callback.auth',[$event,$queue,$callback]);
+    }
+
+
+    /*
+     * Handles the testCommand CommandCallback response
+     */
+    public function testCallback(CommandCallback $callback)
+    {
+        $callback->eventQueue->ircNotice("#FSDChannel",'Callback success');
+        echo "\r\n";
+        print_r($callback->user);
+        echo "\r\n";
+
     }
 
     public function coinsCallback(Event $event, Queue $queue)
     {
         $logger = $this->logger;
-        $logger->info('Event received',['Callback' => $event->getCustomCommand()]);
+        $logger->info('Event received',['CommandCallback' => $event->getCustomCommand()]);
     }
     /**
      * Handles coin command calls
