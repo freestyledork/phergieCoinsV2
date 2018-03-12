@@ -4,7 +4,7 @@
  * using a PDO database as storage method.
  *
  * @category Phergie
- * @package Freestyledork\Phergie\Plugin\Coins\Db
+ * @package Freestyledork\Phergie\Plugin\Coins\Model
  */
 namespace Freestyledork\Phergie\Plugin\Coins\Model;
 
