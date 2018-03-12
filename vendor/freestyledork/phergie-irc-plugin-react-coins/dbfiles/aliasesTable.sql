@@ -5,4 +5,4 @@ CREATE TABLE `aliases` (
   PRIMARY KEY (`alias_id`),
   UNIQUE KEY `alias_UNIQUE` (`alias`),
   UNIQUE KEY `alias_id_UNIQUE` (`alias_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;

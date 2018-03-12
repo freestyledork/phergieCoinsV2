@@ -5,4 +5,4 @@ CREATE TABLE `collections` (
   `amount` int(11) NOT NULL COMMENT 'how much that was gained in this collection',
   PRIMARY KEY (`collection_id`),
   UNIQUE KEY `collection_id_UNIQUE` (`collection_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
