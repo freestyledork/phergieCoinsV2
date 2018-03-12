@@ -1,14 +1,15 @@
 <?php
 /**
- * Handles database communication in Freestyledork\Phergie\Plugin\Coins Plugin
- * using a PDO database as storage method.
- *
- * @category Phergie
- * @package Freestyledork\Phergie\Plugin\Coins\Db
+ * Created by PhpStorm.
+ * User: snow
+ * Date: 3/11/18
+ * Time: 10:02 PM
  */
-namespace Freestyledork\Phergie\Plugin\Coins\Db;
 
-class CoinsDbWrapper
+namespace Freestyledork\Phergie\Plugin\Coins\Model;
+
+
+class UserModel
 {
     /**
      * PDO database object
@@ -16,9 +17,6 @@ class CoinsDbWrapper
      * @var \PDO
      */
     protected $connection;
-
-    protected $minCollectInterval = 30;
-    protected $collectAmount = 200;
 
     /**
      * Creates a wrapper to handle PDO connection for Coins Plugin
@@ -33,5 +31,4 @@ class CoinsDbWrapper
     public function dbTest(){
         return 'dbTestSuccess!!';
     }
-
 }

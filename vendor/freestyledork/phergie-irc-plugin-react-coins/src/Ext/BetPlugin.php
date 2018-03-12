@@ -12,7 +12,7 @@ use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Event\UserEventInterface;
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as Event;
-use Freestyledork\Phergie\Plugin\Coins\Db;
+use Freestyledork\Phergie\Plugin\Coins\Model;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 //use Freestyledork\Phergie\Plugin\Coins\Helper\Helper;
@@ -61,7 +61,7 @@ class BetPlugin extends AbstractPlugin
     public function __construct(array $config = [])
     {
         if(isset($config['database'])){
-            $this->coinsDbWrapper = new Db\CoinsDbWrapper(['database' => $config['database']]);
+            $this->coinsDbWrapper = new Model\CollectionModel(['database' => $config['database']]);
         }
     }
 

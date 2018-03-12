@@ -6,9 +6,9 @@
  * @category Phergie
  * @package Freestyledork\Phergie\Plugin\Coins\Db
  */
-namespace Freestyledork\Phergie\Plugin\Coins\Db;
+namespace Freestyledork\Phergie\Plugin\Coins\Model;
 
-class CoinsBetDbWrapper extends CoinsDbWrapper
+class CollectionModel extends UserModel
 {
     /**
      * PDO database object
@@ -17,7 +17,7 @@ class CoinsBetDbWrapper extends CoinsDbWrapper
      */
     protected $connection;
 
-    protected $minCollectInterval = 30;
+    protected $minCollectInterval = 120;
     protected $collectAmount = 200;
 
     /**
@@ -27,12 +27,11 @@ class CoinsBetDbWrapper extends CoinsDbWrapper
      */
     public function __construct(array $config = [])
     {
-        parent::__construct();
         $this->connection = $config['database'];
     }
 
-    public function betDbTest(){
-        return 'betDbTestSuccess!!';
+    public function dbTest(){
+        return 'dbTestSuccess!!';
     }
 
 }

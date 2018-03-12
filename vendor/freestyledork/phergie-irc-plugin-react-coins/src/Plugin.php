@@ -43,7 +43,7 @@ class Plugin extends AbstractPlugin
     /**
      * Database Wrapper for basic coins info
      *
-     * @var Db\CoinsDbWrapper
+     * @var Model\CollectionModel
      */
     protected $coinsDbWrapper;
 
@@ -62,7 +62,7 @@ class Plugin extends AbstractPlugin
     public function __construct(array $config = [])
     {
         if(isset($config['database'])){
-            $this->coinsDbWrapper = new Db\CoinsDbWrapper(['database' => $config['database']]);
+            $this->coinsDbWrapper = new Model\CollectionModel(['database' => $config['database']]);
         }
     }
 
