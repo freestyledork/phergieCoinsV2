@@ -66,9 +66,13 @@ class UserModel
             'SELECT user_id
                         FROM users
                        WHERE nick = ?
+                       UNION 
+                      SELECT user_id 
+                        FROM aliases 
+                       WHERE alias = ?
                        LIMIT 1;'
         );
-        if ($statement->execute([ $nick ])) {
+        if ($statement->execute([ $nick,$nick ])) {
             $result = $statement->fetch();
         }
         return $result;
@@ -112,4 +116,17 @@ class UserModel
         return $result;
     }
 
+    public function addCoinsToUser($user_id, $amount){
+        $statement = $this->connection->prepare(
+            'UPDATE users SET worth = worth + ? WHERE "user_id" = ?'
+        );
+        return $statement->execute([$amount, $user_id ]);
+    }
+
+    public function removeCoinsFromUser($user_id, $amount){
+        $statement = $this->connection->prepare(
+            'UPDATE users SET worth = worth - ? WHERE "user_id" = ?'
+        );
+        return $statement->execute([$amount, $user_id ]);
+    }
 }
