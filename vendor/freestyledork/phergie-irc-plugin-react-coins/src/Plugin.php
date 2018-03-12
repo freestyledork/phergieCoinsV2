@@ -45,7 +45,7 @@ class Plugin extends AbstractPlugin
      *
      * @var Model\CollectionModel
      */
-    protected $coinsDbWrapper;
+    protected $collectionModel;
 
     /**
      * Accepts plugin configuration.
@@ -62,7 +62,7 @@ class Plugin extends AbstractPlugin
     public function __construct(array $config = [])
     {
         if(isset($config['database'])){
-            $this->coinsDbWrapper = new Model\CollectionModel(['database' => $config['database']]);
+            $this->collectionModel = new Model\CollectionModel(['database' => $config['database']]);
         }
     }
 
@@ -102,12 +102,8 @@ class Plugin extends AbstractPlugin
     public function testCallback(CommandCallback $callback)
     {
         $source = $callback->commandEvent->getSource();
+        $callback->eventQueue->ircPrivmsg($source,'Callback success');
         $callback->eventQueue->ircNotice($source,'Callback success');
-
-        //debug
-        echo "\r\n";
-        print_r($callback->user);
-        echo "\r\n";
     }
 
     /**
@@ -140,8 +136,10 @@ class Plugin extends AbstractPlugin
      */
     public function coinsCallback(CommandCallback $callback)
     {
+        $test = $this->collectionModel->dbTest();
         $source = $callback->commandEvent->getSource();
-        $callback->eventQueue->ircNotice($source,'Callback success');
+        $callback->eventQueue->ircPrivmsg($source,"Callback success {$test}");
+        $callback->eventQueue->ircNotice($source,"Callback success {$test}");
         $this->getLogger()->info(
             'Event received',
             ['CommandCallback' => $callback->commandEvent->getCustomCommand()]

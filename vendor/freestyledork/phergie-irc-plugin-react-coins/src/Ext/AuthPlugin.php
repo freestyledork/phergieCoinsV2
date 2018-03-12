@@ -14,6 +14,7 @@ use Phergie\Irc\Plugin\React\Command\CommandEvent as Event;
 use Phergie\Irc\Event\UserEventInterface as UserEvent;
 use Freestyledork\Phergie\Plugin\Coins\CommandCallback;
 
+
 class AuthPlugin extends AbstractPlugin
 {
     /**
@@ -148,6 +149,11 @@ class AuthPlugin extends AbstractPlugin
             {
                 $this->getEventEmitter()->emit($callback->getCallbackEvent(),[$callback]);
                 unset($this->authCallbacks[$nick]);
+
+                //debug
+                echo "\r\n";
+                print_r($callback->user);
+                echo "\r\n";
             }
         }
     }
