@@ -13,7 +13,12 @@ use Phergie\Irc\Plugin\React\NickServ\Plugin as NickServPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Plugin as CoinsPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\BetPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\AuthPlugin;
-use Freestyledork\Phergie\Plugin\CallbackTest\Plugin as CallbackPlugin;
+use Freestyledork\Phergie\Plugin\Coins\Ext\BankPlugin;
+use Freestyledork\Phergie\Plugin\Coins\Ext\CraftPlugin;
+use Freestyledork\Phergie\Plugin\Coins\Ext\LottoPlugin;
+use Freestyledork\Phergie\Plugin\Coins\Ext\MinePlugin;
+use Freestyledork\Phergie\Plugin\Coins\Ext\StealPlugin;
+use Freestyledork\Phergie\Plugin\Coins\Ext\InventoryPlugin;
 
 $prefix      = '!';
 $credentials = json_decode(file_get_contents("credentials.json"),true);
@@ -54,14 +59,19 @@ $connection  = new Connection(['serverHostname' => 'irc.freenode.net',
 /**********************************************************
  * Plugins Info
  *********************************************************/
-$nickServ    = new NickServPlugin(array('password' => $ircPass));
-$command     = new CommandPlugin(['prefix' => $prefix]);
-$autoJoin    = new AutoJoinPlugin(['channels' => $ircChannels,'wait-for-nickserv' => true]);
-$auth        = new AuthPlugin();
-$callback    = new CallbackPlugin();
-$coins       = new CoinsPlugin(['database' => $database]);
-$bet         = new BetPlugin(['database' => $database]);
-$quit        = new QuitPlugin(['message' => 'because %s said so']);
+$nickServ   = new NickServPlugin(array('password' => $ircPass));
+$command    = new CommandPlugin(['prefix' => $prefix]);
+$autoJoin   = new AutoJoinPlugin(['channels' => $ircChannels,'wait-for-nickserv' => true]);
+$auth       = new AuthPlugin();
+$coins      = new CoinsPlugin(['database' => $database]);
+$bet        = new BetPlugin(['database' => $database]);
+$bank       = new BankPlugin(['database' => $database]);
+$craft      = new CraftPlugin(['database' => $database]);
+$mine       = new MinePlugin(['database' => $database]);
+$steal      = new StealPlugin(['database' => $database]);
+$lotto      = new LottoPlugin(['database' => $database]);
+$inventory  = new InventoryPlugin(['database' => $database]);
+$quit       = new QuitPlugin(['message' => 'because %s said so']);
 
 /**********************************************************
  * Event Filter Info
@@ -82,11 +92,16 @@ return array(
         $command,
         $autoJoin,
         $nickServ,
-        $auth,
-        $callback,
         $quitEventFilter,
         $coins,
-        $bet
+        $auth,
+        $bet,
+        $bank,
+        $mine,
+        $craft,
+        $steal,
+        $lotto,
+        $inventory
     ),
     // Connections
     'connections' => array(

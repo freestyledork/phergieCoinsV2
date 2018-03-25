@@ -13,6 +13,5 @@
 /credentials.json
 /composer.lock
 /vendor/autoload.php
-/vendor/freestyledork/phergie-irc-plugin-react-authentication/
 /vendor/freestyledork/phergie-irc-plugin-react-callbacktest/src/Plugin.php
 /vendor/freestyledork/phergie-irc-plugin-react-authentication/src/Plugin.php

@@ -55,13 +55,14 @@ class AuthPlugin extends AbstractPlugin
     }
 
     /**
-     * @param Event $event
-     * @param Queue $queue
      * @param CommandCallback $callback
      */
-    public function startAuthentication(Event $event, Queue $queue, CommandCallback $callback)
+    public function startAuthentication( CommandCallback $callback )
     {
+        $event = $callback->commandEvent;
+        $queue = $callback->eventQueue;
         $nick = $callback->user->nick;
+
         $queue->ircPrivmsg($event->getSource(), "auth attempt received {$nick}" );
 
         // below might not be needed (overflow protection)
@@ -82,7 +83,7 @@ class AuthPlugin extends AbstractPlugin
      * @param \Phergie\Irc\Event\UserEventInterface $event
      * @param \Phergie\Irc\Bot\React\EventQueueInterface $queue
      */
-    public function handleNotice(UserEvent $event, Queue $queue)
+    public function handleNotice(UserEvent $event)
     {
         // acc regex
         $acc = '/(?P<nick>[a-zA-Z0-9_\-\[\]{}^`|]+)\s+acc\s(?P<value>\d)/';
@@ -103,9 +104,8 @@ class AuthPlugin extends AbstractPlugin
 
         /** TODO: possibly find better solution to remove formatting. */
         $params = $event->getParams();
-        $message = strtolower($params['text']);
-        $message = strip_tags($message);
-        $message = preg_replace("/[^a-zA-Z0-9().@\/~\-_:{}^`* ]+/", "", $message);
+        $message = preg_replace('/[^\x20-\x7E]/','', $params['text']);
+        $message = strtolower($message);
 
         // handle nick status
         if (preg_match($acc, $message,$accInfo)) {
@@ -151,9 +151,9 @@ class AuthPlugin extends AbstractPlugin
                 unset($this->authCallbacks[$nick]);
 
                 //debug
-                echo "\r\n";
-                print_r($callback->user);
-                echo "\r\n";
+//                echo "\r\n";
+//                print_r($callback->user);
+//                echo "\r\n";
             }
         }
     }

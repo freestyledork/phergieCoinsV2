@@ -8,6 +8,8 @@
 
 namespace Freestyledork\Phergie\Plugin\Coins;
 
+use Freestyledork\Phergie\Plugin\Coins\Helper\Response;
+
 class User
 {
     /**
@@ -30,11 +32,6 @@ class User
      * @var $accLevel integer
      */
     public $accLevel;
-    /**
-     *
-     * @var $authValid bool
-     */
-    public $authValid;
     /**
      * @var $host string
      */
@@ -63,7 +60,6 @@ class User
      * @var $aliases array
      */
     public $aliases = [];
-
     /**
      * User constructor.
      * @param $nick string
@@ -74,42 +70,71 @@ class User
     }
 
     /**
+     * @param $user_info array
+     */
+    public function setUserInfo($user_info){
+        if (isset($user_info['worth'])){
+            $this->worth = $user_info['worth'];
+        }
+        if (isset($user_info['creation'])){
+            $this->creation = $user_info['creation'];
+        }
+        if (isset($user_info['type'])){
+            $this->type = $user_info['type'];
+        }
+        if (isset($user_info['status'])){
+            $this->status = $user_info['status'];
+        }
+    }
+
+    /**
      * Determines whether the user is authenticated
      *
-     * @return bool
+     * @return Response
      */
-    public function authUser(){
+    public function isValidIrc(){
+        $response = new Response(false);
         if ($this->accLevel === null || $this->accountName === null){
-            $this->authValid = false;
-            return $this->authValid;
+            $msg = 'General Error';
+            $response->setError($msg);
+            return $response;
         }
-        if ($this->accLevel == 0 && $this->accountName === "Not Registered"){
+        if ($this->accLevel == 0 && $this->accountName === 'Not Registered'){
             $msg = "No Account for: {$this->nick}";
-            $this->authValid = true;
-            return $this->authValid;
+            $response->value = true;
+            $response->setError($msg);
+            return $response;
         }
         if ($this->accLevel == 0){
             $msg = "{$this->nick} is registered to {$this->accountName} but is not in use.";
-            $this->authValid = false;
-            return $this->authValid;
+            $response->setError($msg);
+            return $response;
         }
         if ($this->accLevel == 1){
             $msg = "{$this->nick} is registered to {$this->accountName} but not logged in.";
-            $this->authValid = false;
-            return $this->authValid;
+            $response->setError($msg);
+            return $response;
         }
         if ($this->accLevel == 2){
             $msg = "{$this->nick} is registered to {$this->accountName} and recognized.";
-            $this->authValid = true;
-            return $this->authValid;
+            $response->value = true;
+            return $response;
         }
         if ($this->accLevel == 3){
             $msg = "{$this->nick} is registered to {$this->accountName} and logged in.";
-            $this->authValid = true;
-            return $this->authValid;
+            $response->value = true;
+            return $response;
         }
         // catch anything that makes it through
-        $this->authValid = false;
-        return $this->authValid;
+        $msg = 'General Error';
+        $response->setError($msg);
+        return $response;
+    }
+
+    public function canRegister()
+    {
+        return $this->accLevel == 2 ||
+            $this->accLevel == 3 ||
+            ($this->accLevel == 0 && $this->accountName === 'Not Registered');
     }
 }

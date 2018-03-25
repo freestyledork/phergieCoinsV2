@@ -45,4 +45,24 @@ class CollectionModel extends UserModel
         }
         return $result;
     }
+
+    public function getUserLastCollectionTime($user_id){
+        $statement = $this->connection->prepare(
+            'SELECT time
+                        FROM collections
+                       WHERE user_id = ?
+                   ORDER  BY time DESC
+                       LIMIT 1'
+        );
+        if ($statement->execute([ $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    public function getCollectIntervalInSeconds(){
+        return $this->minCollectInterval* 60;
+    }
+
+
 }

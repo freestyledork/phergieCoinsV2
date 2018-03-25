@@ -10,15 +10,9 @@ namespace Freestyledork\Phergie\Plugin\Coins\Ext;
 
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
-use Phergie\Irc\Event\UserEventInterface;
-use Phergie\Irc\Plugin\React\Command\CommandEventInterface as Event;
+use Phergie\Irc\Plugin\React\Command\CommandEventInterface as CommandEvent;
 use Freestyledork\Phergie\Plugin\Coins\Model;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerInterface;
-//use Freestyledork\Phergie\Plugin\Coins\Helper\Helper;
-use Phergie\Irc\Event\UserEventInterface as UserEvent;
-use Phergie\Irc\Event\ServerEventInterface as ServerEvent;
-use Freestyledork\Phergie\Plugin\Authentication as Auth;
+use Freestyledork\Phergie\Plugin\Coins\CommandCallback;
 
 
 class BetPlugin extends AbstractPlugin
@@ -30,6 +24,7 @@ class BetPlugin extends AbstractPlugin
      */
     protected $commandEvents = [
         'command.bet'         => 'betCommand',
+        'command.bet.hilo'    => 'hiloCommand',
     ];
 
     /**
@@ -38,13 +33,11 @@ class BetPlugin extends AbstractPlugin
      * @var array
      */
     protected $callbackEvents = [
-        'coins.callback.bet'         => 'coinsCallback'
+        'coins.callback.bet'        => 'betCallback',
+        'coins.callback.bet.hilo'   => 'hiloCallback',
     ];
 
-
-    protected $commandQueue = [];
-
-    protected $coinsDbWrapper;
+    protected $betModel;
 
     /**
      * Accepts plugin configuration.
@@ -61,7 +54,7 @@ class BetPlugin extends AbstractPlugin
     public function __construct(array $config = [])
     {
         if(isset($config['database'])){
-            $this->coinsDbWrapper = new Model\CollectionModel(['database' => $config['database']]);
+            $this->betModel = new Model\BetModel(['database' => $config['database']]);
         }
     }
 
@@ -78,23 +71,57 @@ class BetPlugin extends AbstractPlugin
         );
     }
 
-
     /**
-     * Handles coin command calls
+     * Handles coin bet command calls
      *
-     * @param Event $event
+     * @param CommandEvent $event
      * @param Queue $queue
      */
-    public function betCommand(Event $event, Queue $queue)
+    public function betCommand(CommandEvent $event, Queue $queue)
     {
+        $source = $event->getSource();
         $logger = $this->logger;
         $logger->info('Command received',['COMMAND' => $event->getCommand()]);
         $nick = $event->getNick();
-        $queue->ircNotice($nick, 'Bet Command Started. (WIP)');
+        $queue->ircPrivmsg($source, 'Bet Command Started. (WIP)');
+        $nick = strtolower($nick);
+
+        $callback = new CommandCallback($event,$queue ,$nick);
+
+        $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
     }
-    public function coinsCallback()
+    public function betCallback(CommandCallback $callback)
     {
+        $source = $callback->commandEvent->getSource();
+        $callback->eventQueue->ircPrivmsg($source, 'bet Command callback success. (WIP)');
         $logger =  $this->logger;
         $logger->info('Event received',['CommandCallback' => 'betCallback']);
+    }
+
+    /**
+     * Handles coin bet hilo command calls
+     *
+     * @param CommandEvent $event
+     * @param Queue $queue
+     */
+    public function hiloCommand(CommandEvent $event, Queue $queue)
+    {
+        $source = $event->getSource();
+        $logger = $this->logger;
+        $logger->info('Command received',['COMMAND' => $event->getCommand()]);
+        $nick = $event->getNick();
+        $queue->ircPrivmsg($source, 'hilo Command Started. (WIP)');
+        $nick = strtolower($nick);
+
+        $callback = new CommandCallback($event,$queue ,$nick);
+
+        $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
+    }
+    public function hiloCallback(CommandCallback $callback)
+    {
+        $source = $callback->commandEvent->getSource();
+        $callback->eventQueue->ircPrivmsg($source, 'hilo Command callback success. (WIP)');
+        $logger =  $this->logger;
+        $logger->info('Event received',['CommandCallback' => 'hiloCallback']);
     }
 }
