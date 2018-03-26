@@ -9,9 +9,9 @@
 
 namespace Freestyledork\Phergie\Plugin\Coins\Model;
 
-use Freestyledork\Phergie\Plugin\Coins\Enum\ErrorType;
-use Freestyledork\Phergie\Plugin\Coins\Error;
-use Freestyledork\Phergie\Plugin\Coins\User;
+//use Freestyledork\Phergie\Plugin\Coins\Enum\ErrorType;
+use Freestyledork\Phergie\Plugin\Coins\Helper\Error;
+use Freestyledork\Phergie\Plugin\Coins\Helper\User;
 
 class UserModel
 {

@@ -12,8 +12,8 @@ use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as CommandEvent;
 use Freestyledork\Phergie\Plugin\Coins\Model;
-use Freestyledork\Phergie\Plugin\Coins\CommandCallback;
-
+use Freestyledork\Phergie\Plugin\Coins\Helper\CommandCallback;
+use Freestyledork\Phergie\Plugin\Coins\Utils\Log;
 
 class BetPlugin extends AbstractPlugin
 {
@@ -37,7 +37,21 @@ class BetPlugin extends AbstractPlugin
         'coins.callback.bet.hilo'   => 'hiloCallback',
     ];
 
+    /**
+     * database model
+     * @var Model\BetModel
+     */
     protected $betModel;
+
+    protected $minBetInterval = 20;
+    protected $maxBetAmount = 50;
+
+    /**
+     * in seconds (12 hours)
+     * @var int
+     */
+    protected $maxOverflowTime = 43200;
+
 
     /**
      * Accepts plugin configuration.
@@ -80,19 +94,20 @@ class BetPlugin extends AbstractPlugin
     public function betCommand(CommandEvent $event, Queue $queue)
     {
         $source = $event->getSource();
-        $logger = $this->logger;
-        $logger->info('Command received',['COMMAND' => $event->getCommand()]);
+
         $nick = $event->getNick();
         $queue->ircPrivmsg($source, 'Bet Command Started. (WIP)');
         $nick = strtolower($nick);
-
+        Log::Command($this->getLogger(),$event);
         $callback = new CommandCallback($event,$queue ,$nick);
 
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
     }
+
     public function betCallback(CommandCallback $callback)
     {
         $source = $callback->commandEvent->getSource();
+        Log::Event($this->getLogger(),$callback->getAuthCallbackEventName());
         $callback->eventQueue->ircPrivmsg($source, 'bet Command callback success. (WIP)');
         $logger =  $this->logger;
         $logger->info('Event received',['CommandCallback' => 'betCallback']);
@@ -108,7 +123,7 @@ class BetPlugin extends AbstractPlugin
     {
         $source = $event->getSource();
         $logger = $this->logger;
-        $logger->info('Command received',['COMMAND' => $event->getCommand()]);
+        Log::Command($this->getLogger(),$event);
         $nick = $event->getNick();
         $queue->ircPrivmsg($source, 'hilo Command Started. (WIP)');
         $nick = strtolower($nick);
@@ -117,11 +132,11 @@ class BetPlugin extends AbstractPlugin
 
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
     }
+
     public function hiloCallback(CommandCallback $callback)
     {
         $source = $callback->commandEvent->getSource();
         $callback->eventQueue->ircPrivmsg($source, 'hilo Command callback success. (WIP)');
-        $logger =  $this->logger;
-        $logger->info('Event received',['CommandCallback' => 'hiloCallback']);
+        Log::Event($this->getLogger(),$callback->getAuthCallbackEventName());
     }
 }

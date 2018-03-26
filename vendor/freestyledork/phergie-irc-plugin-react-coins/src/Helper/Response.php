@@ -7,7 +7,6 @@
  */
 
 namespace Freestyledork\Phergie\Plugin\Coins\Helper;
-use Freestyledork\Phergie\Plugin\Coins\Error;
 
 class Response
 {

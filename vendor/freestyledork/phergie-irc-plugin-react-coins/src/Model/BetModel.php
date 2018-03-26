@@ -15,9 +15,6 @@ use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
 class BetModel extends UserModel
 {
 
-    protected $minBetInterval = 20;
-    protected $maxBetAmount = 200;
-
 
     /**
      * validates the bet amount for the user, returns results array

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @package Custom\Phergie\Plugin\Coins
  */

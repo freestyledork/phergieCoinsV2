@@ -6,9 +6,8 @@
  * @package Freestyledork\Phergie\Plugin\Coins
  */
 
-namespace Freestyledork\Phergie\Plugin\Coins;
+namespace Freestyledork\Phergie\Plugin\Coins\Helper;
 
-use Freestyledork\Phergie\Plugin\Coins\Helper\Response;
 
 class User
 {

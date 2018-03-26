@@ -11,6 +11,8 @@ use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as CommandEvent;
 use Freestyledork\Phergie\Plugin\Coins\Utils\Format;
+use Freestyledork\Phergie\Plugin\Coins\Helper\CommandCallback;
+use Freestyledork\Phergie\Plugin\Coins\Helper\User;
 
 
 /**
@@ -128,6 +130,10 @@ class Plugin extends AbstractPlugin
         $nick = strtolower($event->getNick());
         $callback = new CommandCallback($event,$queue ,$nick);
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
+
+        $this->getLogger()->info('Command received',
+            ['COMMAND' => $event->getCustomCommand(),
+                'PARAMS' => $event->getCustomParams()]);
     }
 
     /**
@@ -273,6 +279,5 @@ class Plugin extends AbstractPlugin
         }
         $response = $response . " [aliases] " . $aliasesString;
         $queue->ircNotice($nick, "info for {$nick}: {$response}");
-
     }
 }

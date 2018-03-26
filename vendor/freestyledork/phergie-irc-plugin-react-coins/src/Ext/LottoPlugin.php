@@ -12,7 +12,8 @@ use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as CommandEvent;
 use Freestyledork\Phergie\Plugin\Coins\Model;
-use Freestyledork\Phergie\Plugin\Coins\CommandCallback;
+use Freestyledork\Phergie\Plugin\Coins\Helper\CommandCallback;
+use Freestyledork\Phergie\Plugin\Coins\Utils\Log;
 
 class LottoPlugin extends AbstractPlugin
 {
@@ -71,8 +72,7 @@ class LottoPlugin extends AbstractPlugin
     public function lottoCommand(CommandEvent $event, Queue $queue)
     {
         $source = $event->getSource();
-        $logger = $this->logger;
-        $logger->info('Command received',['COMMAND' => $event->getCommand()]);
+        Log::Command($this->getLogger(),$event);
         $nick = $event->getNick();
         $queue->ircPrivmsg($source, 'Lotto Command Started. (WIP)');
         $nick = strtolower($nick);
@@ -85,8 +85,7 @@ class LottoPlugin extends AbstractPlugin
     {
         $source = $callback->commandEvent->getSource();
         $callback->eventQueue->ircPrivmsg($source, 'lotto Command callback success. (WIP)');
-        $logger =  $this->logger;
-        $logger->info('Event received',['CommandCallback' => 'betCallback']);
+        Log::Event($this->getLogger(),$callback->getAuthCallbackEventName());
     }
 
 }

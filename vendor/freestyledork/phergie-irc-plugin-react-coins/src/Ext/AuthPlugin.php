@@ -12,7 +12,7 @@ use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEvent as Event;
 use Phergie\Irc\Event\UserEventInterface as UserEvent;
-use Freestyledork\Phergie\Plugin\Coins\CommandCallback;
+use Freestyledork\Phergie\Plugin\Coins\Helper\CommandCallback;
 
 
 class AuthPlugin extends AbstractPlugin

@@ -6,7 +6,7 @@
  * Time: 4:17 PM
  */
 
-namespace Freestyledork\Phergie\Plugin\Coins;
+namespace Freestyledork\Phergie\Plugin\Coins\Helper;
 
 use Freestyledork\Phergie\Plugin\Coins\Enum;
 

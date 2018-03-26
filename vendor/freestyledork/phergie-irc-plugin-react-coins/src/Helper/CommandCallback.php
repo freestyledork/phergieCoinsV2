@@ -6,7 +6,7 @@
  * @package Freestyledork\Phergie\Plugin\Coins
  */
 
-namespace Freestyledork\Phergie\Plugin\Coins;
+namespace Freestyledork\Phergie\Plugin\Coins\Helper;
 
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as Event;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
