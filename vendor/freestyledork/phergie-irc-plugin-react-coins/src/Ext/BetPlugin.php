@@ -93,24 +93,33 @@ class BetPlugin extends AbstractPlugin
      */
     public function betCommand(CommandEvent $event, Queue $queue)
     {
-        $source = $event->getSource();
-
-        $nick = $event->getNick();
-        $queue->ircPrivmsg($source, 'Bet Command Started. (WIP)');
-        $nick = strtolower($nick);
         Log::Command($this->getLogger(),$event);
-        $callback = new CommandCallback($event,$queue ,$nick);
+        //debugging
+        $queue->ircPrivmsg($event->getSource(), 'Bet Command Started. (WIP)');
 
+        $callback = new CommandCallback($event,$queue ,strtolower($event->getNick()));
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
     }
 
     public function betCallback(CommandCallback $callback)
     {
-        $source = $callback->commandEvent->getSource();
-        Log::Event($this->getLogger(),$callback->getAuthCallbackEventName());
+        $queue = $callback->eventQueue;
+        $event = $callback->commandEvent;
+        $user =  $callback->user;
+        $source = $event->getSource();
+
+        // is the user in a valid state
+        $response = $user->isValidIrc();
+        if (!$response->value){
+            foreach ($response->getErrors() as $error){
+                $queue->ircNotice($user->nick,$error);
+            }
+            return;
+        }
+
+
         $callback->eventQueue->ircPrivmsg($source, 'bet Command callback success. (WIP)');
-        $logger =  $this->logger;
-        $logger->info('Event received',['CommandCallback' => 'betCallback']);
+        Log::Event($this->getLogger(),$callback->getAuthCallbackEventName());
     }
 
     /**
@@ -121,21 +130,32 @@ class BetPlugin extends AbstractPlugin
      */
     public function hiloCommand(CommandEvent $event, Queue $queue)
     {
-        $source = $event->getSource();
-        $logger = $this->logger;
         Log::Command($this->getLogger(),$event);
-        $nick = $event->getNick();
-        $queue->ircPrivmsg($source, 'hilo Command Started. (WIP)');
-        $nick = strtolower($nick);
 
-        $callback = new CommandCallback($event,$queue ,$nick);
+        //debugging
+        $queue->ircPrivmsg($event->getSource(), 'hilo Command Started. (WIP)');
 
+        $callback = new CommandCallback($event,$queue ,strtolower($event->getNick()));
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
     }
 
     public function hiloCallback(CommandCallback $callback)
     {
-        $source = $callback->commandEvent->getSource();
+        $queue = $callback->eventQueue;
+        $event = $callback->commandEvent;
+        $user =  $callback->user;
+        $source = $event->getSource();
+
+        // is the user in a valid state
+        $response = $user->isValidIrc();
+        if (!$response->value){
+            foreach ($response->getErrors() as $error){
+                $queue->ircNotice($user->nick,$error);
+            }
+            return;
+        }
+
+
         $callback->eventQueue->ircPrivmsg($source, 'hilo Command callback success. (WIP)');
         Log::Event($this->getLogger(),$callback->getAuthCallbackEventName());
     }

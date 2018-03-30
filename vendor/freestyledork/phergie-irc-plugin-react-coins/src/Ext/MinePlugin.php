@@ -71,19 +71,29 @@ class MinePlugin extends AbstractPlugin
      */
     public function mineCommand(CommandEvent $event, Queue $queue)
     {
-        $source = $event->getSource();
         Log::Command($this->getLogger(),$event);
-        $nick = $event->getNick();
-        $queue->ircPrivmsg($source, 'mine Command Started. (WIP)');
-        $nick = strtolower($nick);
 
-        $callback = new CommandCallback($event,$queue ,$nick);
+        $queue->ircPrivmsg($event->getSource(), 'mine Command Started. (WIP)');
 
+        $callback = new CommandCallback($event,$queue ,strtolower($event->getNick()));
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
     }
     public function mineCallback(CommandCallback $callback)
     {
-        $source = $callback->commandEvent->getSource();
+        $queue = $callback->eventQueue;
+        $event = $callback->commandEvent;
+        $user =  $callback->user;
+        $source = $event->getSource();
+
+        // is the user in a valid state
+        $response = $user->isValidIrc();
+        if (!$response->value){
+            foreach ($response->getErrors() as $error){
+                $queue->ircNotice($user->nick,$error);
+            }
+            return;
+        }
+
         $callback->eventQueue->ircPrivmsg($source, 'mine Command callback success. (WIP)');
         Log::Event($this->getLogger(),$callback->getAuthCallbackEventName());
     }

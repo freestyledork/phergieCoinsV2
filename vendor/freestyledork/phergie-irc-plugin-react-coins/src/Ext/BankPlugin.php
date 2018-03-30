@@ -72,19 +72,31 @@ class BankPlugin extends AbstractPlugin
      */
     public function bankCommand(CommandEvent $event, Queue $queue)
     {
-        $source = $event->getSource();
         Log::Command($this->getLogger(),$event);
-        $nick = $event->getNick();
-        $queue->ircPrivmsg($source, 'bank Command Started. (WIP)');
-        $nick = strtolower($nick);
 
-        $callback = new CommandCallback($event,$queue ,$nick);
+        // debugging
+        $queue->ircPrivmsg($event->getSource(), 'bank Command Started. (WIP)');
 
+        $callback = new CommandCallback($event,$queue ,strtolower($event->getNick()));
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
     }
+
     public function bankCallback(CommandCallback $callback)
     {
-        $source = $callback->commandEvent->getSource();
+        $queue = $callback->eventQueue;
+        $event = $callback->commandEvent;
+        $user =  $callback->user;
+        $source = $event->getSource();
+
+        // is the user in a valid state
+        $response = $user->isValidIrc();
+        if (!$response->value){
+            foreach ($response->getErrors() as $error){
+                $queue->ircNotice($user->nick,$error);
+            }
+            return;
+        }
+
         $callback->eventQueue->ircPrivmsg($source, 'bank Command callback success. (WIP)');
         Log::Event($this->getLogger(),$callback->getAuthCallbackEventName());
     }
