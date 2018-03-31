@@ -226,4 +226,23 @@ class UserModel
         }
         return ($user_id === false);
     }
+
+    public function getUserCreationTime($user_id){
+        $statement = $this->connection->prepare(
+            'SELECT creation
+                        FROM users
+                       WHERE user_id = ?'
+        );
+        if ($statement->execute([ $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    public function getUserAge($user_id){
+        $creationDate = $this->getUserCreationTime($user_id);
+        $date_time = date_create($creationDate);
+        $diff = time() - $date_time->format('U');
+        return floor($diff/ (60*60*24));
+    }
 }

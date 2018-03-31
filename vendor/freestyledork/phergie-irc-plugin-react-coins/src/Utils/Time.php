@@ -22,4 +22,16 @@ class Time
         return time() - $date_time->format('U');
     }
 
+    /**
+     * returns the elapsed time since the given time
+     *
+     * @param $time
+     * @return int
+     */
+    public static function timeElapsedInDays($time){
+        $date_time = date_create($time);
+        $diff = time() - $date_time->format('U');
+        return floor($diff/ (60*60*24));
+    }
+
 }

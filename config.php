@@ -20,13 +20,14 @@ use Freestyledork\Phergie\Plugin\Coins\Ext\MinePlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\StealPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\InventoryPlugin;
 
+
 $prefix      = '!';
 $credentials = json_decode(file_get_contents("credentials.json"),true);
 
 /**********************************************************
  * Logger Info
  *********************************************************/
-$logger = new Logger('PhergieLog');
+$logger = new Logger('COINS');
 $logger->pushHandler(new StreamHandler('log/Testing.log', Logger::INFO));
 
 $stderr = defined('\STDERR') && null !== \STDERR
@@ -63,15 +64,17 @@ $nickServ   = new NickServPlugin(array('password' => $ircPass));
 $command    = new CommandPlugin(['prefix' => $prefix]);
 $autoJoin   = new AutoJoinPlugin(['channels' => $ircChannels,'wait-for-nickserv' => true]);
 $auth       = new AuthPlugin();
-$coins      = new CoinsPlugin(['database' => $database]);
-$bet        = new BetPlugin(['database' => $database]);
-$bank       = new BankPlugin(['database' => $database]);
-$craft      = new CraftPlugin(['database' => $database]);
-$mine       = new MinePlugin(['database' => $database]);
-$steal      = new StealPlugin(['database' => $database]);
-$lotto      = new LottoPlugin(['database' => $database]);
-$inventory  = new InventoryPlugin(['database' => $database]);
+$config     = ['database' => $database];
+$coins      = new CoinsPlugin($config);
+$bet        = new BetPlugin($config);
+$bank       = new BankPlugin($config);
+$craft      = new CraftPlugin($config);
+$mine       = new MinePlugin($config);
+$steal      = new StealPlugin($config);
+$lotto      = new LottoPlugin($config);
+$inventory  = new InventoryPlugin($config);
 $quit       = new QuitPlugin(['message' => 'because %s said so']);
+
 
 /**********************************************************
  * Event Filter Info

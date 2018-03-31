@@ -27,7 +27,19 @@ class CollectionModel extends UserModel
                        WHERE user_id = ?'
         );
         if ($statement->execute([ $user_id ])) {
-            $result = $statement->fetch();
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    public function getUserAverageCollections($user_id){
+        $statement = $this->connection->prepare(
+            'SELECT AVG(amount)
+                        FROM collections
+                       WHERE user_id = ?'
+        );
+        if ($statement->execute([ $user_id ])) {
+            $result = $statement->fetchColumn();
         }
         return $result;
     }
@@ -41,7 +53,7 @@ class CollectionModel extends UserModel
                        LIMIT 1'
         );
         if ($statement->execute([ $user_id ])) {
-            $result = $statement->fetch();
+            $result = $statement->fetch(\PDO::FETCH_ASSOC);
         }
         return $result;
     }

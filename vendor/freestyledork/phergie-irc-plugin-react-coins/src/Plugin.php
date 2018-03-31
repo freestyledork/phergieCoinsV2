@@ -6,6 +6,8 @@
 namespace Freestyledork\Phergie\Plugin\Coins;
 
 use Freestyledork\Phergie\Plugin\Coins\Helper\Response;
+use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
+use Freestyledork\Phergie\Plugin\Coins\Utils\Settings;
 use Freestyledork\Phergie\Plugin\Coins\Utils\Time;
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
@@ -31,9 +33,10 @@ class Plugin extends AbstractPlugin
     protected $commandEvents = [
         'command.coins'         => 'coinsCommand',
         'command.coins.help'    => 'coinsHelpCommand',
+        'command.coins.last'    => 'coinsLastCommand',
         'command.test'          => 'testCommand',
         'command.worth'         => 'worthCommand',
-        'command.info'          => 'infoCommand'
+        'command.coins.info'    => 'coinsInfoCommand'
     ];
 
     /**
@@ -52,7 +55,7 @@ class Plugin extends AbstractPlugin
      *
      * @var Model\CollectionModel
      */
-    protected $collectionModel;
+    protected $database;
 
     /**
      * Accepts plugin configuration.
@@ -69,7 +72,10 @@ class Plugin extends AbstractPlugin
     public function __construct(array $config = [])
     {
         if(isset($config['database'])){
-            $this->collectionModel = new Model\CollectionModel(['database' => $config['database']]);
+            $this->database = new Model\CollectionModel(['database' => $config['database']]);
+        }
+        if(isset($config['style'])){
+            $this->text = $config['style'];
         }
     }
 
@@ -108,14 +114,9 @@ class Plugin extends AbstractPlugin
      */
     public function testCallback(CommandCallback $callback)
     {
-        $source = $callback->commandEvent->getSource();
-        $callback->eventQueue->ircPrivmsg($source,'Callback success');
-        $callback->eventQueue->ircNotice($source,'Callback success');
 
-        $this->getLogger()->info(
-            'Event received',
-            ['CommandCallback' => $callback->commandEvent->getCustomCommand()]
-        );
+        $callback->eventQueue->ircPrivmsg($callback->commandEvent->getSource(),Format::color("some random text",'white','red'));
+
     }
 
     /**
@@ -159,27 +160,27 @@ class Plugin extends AbstractPlugin
         }
 
         // is the user already registered with coins
-        $newUser = $this->collectionModel->isNewUser($user);
+        $newUser = $this->database->isNewUser($user);
         var_dump($newUser);
         if ($newUser && $user->canRegister()){
             if ($user->accountName !== 'Not Registered'){
-                $this->collectionModel->addNewRegisteredUser($user->accountName ,$user->nick);
+                $this->database->addNewRegisteredUser($user->accountName ,$user->nick);
             }else{
-                $this->collectionModel->addNewNonRegisteredUser($user->nick);
+                $this->database->addNewNonRegisteredUser($user->nick);
             }
         }
 
         //check for new alias
-        $user_id = $this->collectionModel->getUserIdByNick($user->nick);
+        $user_id = $this->database->getUserIdByNick($user->nick);
         if (!$user_id){
-            $this->collectionModel->addUserAlias($user->accountName,$user->nick);
-            $user_id = $this->collectionModel->getUserIdByNick($user->nick);
+            $this->database->addUserAlias($user->accountName,$user->nick);
+            $user_id = $this->database->getUserIdByNick($user->nick);
         }
 
         // check ability to collect
-        $lastCollection = $this->collectionModel->getUserLastCollectionTime($user_id);
+        $lastCollection = $this->database->getUserLastCollectionTime($user_id);
         $elaspedTime = Time::timeElapsedInSeconds($lastCollection);
-        $minInterval = $this->collectionModel->getCollectIntervalInSeconds();
+        $minInterval = $this->database->getCollectIntervalInSeconds();
         if ($lastCollection !== false && $elaspedTime <= $minInterval){
             // unable to collect
             $ft = Format::formatTime($minInterval - $elaspedTime);
@@ -189,9 +190,9 @@ class Plugin extends AbstractPlugin
         }
         if ($lastCollection === false || $elaspedTime >= $minInterval){
             // able to collect
-            $collectAmount = 175;
-            $this->collectionModel->addNewCollection($user_id, $collectAmount);
-            $this->collectionModel->addCoinsToUser($user_id,$collectAmount);
+            $collectAmount = Roll::CollectionAmount();
+            $this->database->addNewCollection($user_id, $collectAmount);
+            $this->database->addCoinsToUser($user_id,$collectAmount);
             $msg = "You have collected {$collectAmount} more coins!";
             $queue->ircNotice($user->nick,$msg);
             return;
@@ -223,61 +224,89 @@ class Plugin extends AbstractPlugin
         $source = $event->getSource();
         $params = $event->getCustomParams();
 
+        // find target
         if (count($params) == 0){
             $nick = $event->getNick();
         }else {
             $nick = $params[0];
         }
 
-        $user_id = $this->collectionModel->getUserIdByNick($nick);
-
+        // make sure user exists
+        $user_id = $this->database->getUserIdByNick($nick);
         if (!$user_id){
             $queue->ircNotice($source, "I don't know you {$nick}!");
             return;
         }
 
-        $worth = $this->collectionModel->getUserWorthById($user_id);
+        // get users worth
+        $worth = $this->database->getUserWorthById($user_id);
         if ($worth == 0){
             $queue->ircNotice($source,"{$nick} is worthless!");
             return;
         }
+
+        // format & return users worth to chat source
         $worth = Format::formatCoinAmount($worth);
-        $queue->ircNotice($source,"{$nick} is currently worth {$worth} coins.");
+        $queue->ircPrivmsg($source,"{$nick} is currently worth {$worth} coins.");
     }
 
-    public function infoCommand(CommandEvent $event, Queue $queue)
+    /**
+     * displays info about last coins command
+     *
+     * @param CommandEvent $event
+     * @param Queue $queue
+     */
+    public function coinsLastCommand(CommandEvent $event, Queue $queue)
     {
         $source = $event->getSource();
         $params = $event->getCustomParams();
+
+        // decide who to target
         if (count($params) == 0){
             $nick = $event->getNick();
         }else {
             $nick = $params[0];
         }
-        $user_id = $this->collectionModel->getUserIdByNick($nick);
+
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($nick);
         if (!$user_id){
-            $queue->ircNotice($source, "I don't know anyone named {$nick}!");
+            $queue->ircPrivmsg($source, "I don't know anyone named {$nick}!");
+            return;
+        }
+        // todo: get and return last collection info to user
+        $lastCollected = $this->database->getUserLastCollectionInfo($user_id);
+
+        $queue->ircPrivmsg($source, "[Last Collection] {$lastCollected['time']} [Amount] {$lastCollected['amount']}");
+
+    }
+
+
+    public function coinsInfoCommand(CommandEvent $event, Queue $queue)
+    {
+        $source = $event->getSource();
+        $params = $event->getCustomParams();
+
+        // decide who to target
+        if (count($params) == 0){
+            $nick = $event->getNick();
+        }else {
+            $nick = $params[0];
+        }
+
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($nick);
+        if (!$user_id){
+            $queue->ircPrivmsg($source, "I don't know anyone named {$nick}!");
             return;
         }
 
-        $aliases = $this->collectionModel->getUserAliases($user_id);
-        $info = $this->collectionModel->getUserInfoById($user_id);
-        $aliasesString = implode(",",$aliases);
+        // populate info
+        $totalCollections = $this->database->getUserTotalCollections($user_id);
+        $avgCollections = $this->database->getUserAverageCollections($user_id);
+        $age = $this->database->getUserAge($user_id);
 
-        echo "\n";
-        var_dump($aliases);
-        echo "\n";
-        echo "\n";
-        var_dump($aliasesString);
-
-        echo "\n";
-
-        $response = "";
-        foreach ($info as $k => $v){
-            $key = " [". $k . "] ";
-            $response = $response . $key . $v;
-        }
-        $response = $response . " [aliases] " . $aliasesString;
-        $queue->ircNotice($nick, "info for {$nick}: {$response}");
+        // return info to chat
+        $queue->ircPrivmsg($source, "[Total Collections] {$totalCollections} [Average] {$avgCollections} [Age] {$age} days");
     }
 }

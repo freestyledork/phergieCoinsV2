@@ -7,7 +7,9 @@
         "phergie/phergie-irc-plugin-react-quit": "^2.0",
         "phergie/phergie-irc-plugin-react-commandhelp": "^2.1",
         "phergie/phergie-irc-plugin-react-nickserv": "^2.0",
-        "phergie/phergie-irc-plugin-react-eventfilter": "^2.0"
+        "phergie/phergie-irc-plugin-react-eventfilter": "^2.0",
+        "chrismou/php-irc-text-formatting": "^1.0"
+
     },
     "autoload": {
         "psr-4": {

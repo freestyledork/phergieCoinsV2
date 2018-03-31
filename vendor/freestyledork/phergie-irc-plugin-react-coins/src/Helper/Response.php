@@ -14,6 +14,7 @@ class Response
      * @var $errors Error[]
      */
     private $errors = array();
+
     /**
      * @var $value mixed
      */

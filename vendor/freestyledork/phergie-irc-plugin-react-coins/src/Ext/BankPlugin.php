@@ -36,7 +36,7 @@ class BankPlugin extends AbstractPlugin
         'coins.callback.bank'        => 'bankCallback',
     ];
 
-    protected $bankModel;
+    protected $database;
 
     /**
      * Accepts plugin configuration.
@@ -49,7 +49,7 @@ class BankPlugin extends AbstractPlugin
     public function __construct(array $config = [])
     {
         if(isset($config['database'])){
-            $this->bankModel = new Model\BankModel(['database' => $config['database']]);
+            $this->database = new Model\BankModel(['database' => $config['database']]);
         }
     }
 
@@ -73,9 +73,21 @@ class BankPlugin extends AbstractPlugin
     public function bankCommand(CommandEvent $event, Queue $queue)
     {
         Log::Command($this->getLogger(),$event);
+        $nick = $event->getNick();
+        $source = $event->getSource();
+        $params = $event->getCustomParams();
 
-        // debugging
-        $queue->ircPrivmsg($event->getSource(), 'bank Command Started. (WIP)');
+        if ($params[0] !== 'withdrawal' || $params[0] !== 'deposit'){
+            $queue->ircNotice($nick,'Please use correct format: <bank> <deposit or withdrawal> <amount>');
+            return;
+        }
+
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($nick);
+        if (!$user_id){
+            $queue->ircPrivmsg($source, "I don't know anyone named {$nick}!");
+            return;
+        }
 
         $callback = new CommandCallback($event,$queue ,strtolower($event->getNick()));
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);

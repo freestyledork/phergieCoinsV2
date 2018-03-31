@@ -8,6 +8,8 @@
 
 namespace Freestyledork\Phergie\Plugin\Coins\Ext;
 
+use Freestyledork\Phergie\Plugin\Coins\Helper\Response;
+use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as CommandEvent;
@@ -25,6 +27,8 @@ class BetPlugin extends AbstractPlugin
     protected $commandEvents = [
         'command.bet'         => 'betCommand',
         'command.bet.hilo'    => 'hiloCommand',
+        'command.bet.last'    => 'betLastCommand',
+        'command.bet.info'    => 'betInfoCommand'
     ];
 
     /**
@@ -41,17 +45,7 @@ class BetPlugin extends AbstractPlugin
      * database model
      * @var Model\BetModel
      */
-    protected $betModel;
-
-    protected $minBetInterval = 20;
-    protected $maxBetAmount = 50;
-
-    /**
-     * in seconds (12 hours)
-     * @var int
-     */
-    protected $maxOverflowTime = 43200;
-
+    protected $database;
 
     /**
      * Accepts plugin configuration.
@@ -68,7 +62,7 @@ class BetPlugin extends AbstractPlugin
     public function __construct(array $config = [])
     {
         if(isset($config['database'])){
-            $this->betModel = new Model\BetModel(['database' => $config['database']]);
+            $this->database = new Model\BetModel(['database' => $config['database']]);
         }
     }
 
@@ -94,8 +88,6 @@ class BetPlugin extends AbstractPlugin
     public function betCommand(CommandEvent $event, Queue $queue)
     {
         Log::Command($this->getLogger(),$event);
-        //debugging
-        $queue->ircPrivmsg($event->getSource(), 'Bet Command Started. (WIP)');
 
         $callback = new CommandCallback($event,$queue ,strtolower($event->getNick()));
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
@@ -107,6 +99,7 @@ class BetPlugin extends AbstractPlugin
         $event = $callback->commandEvent;
         $user =  $callback->user;
         $source = $event->getSource();
+        $nick = $user->nick;
 
         // is the user in a valid state
         $response = $user->isValidIrc();
@@ -117,9 +110,42 @@ class BetPlugin extends AbstractPlugin
             return;
         }
 
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($nick);
+        if (!$user_id){
+            $queue->ircPrivmsg($source, "Sorry {$nick}, you must use coins command before betting.");
+            return;
+        }
 
-        $callback->eventQueue->ircPrivmsg($source, 'bet Command callback success. (WIP)');
-        Log::Event($this->getLogger(),$callback->getAuthCallbackEventName());
+        // validate bet amount
+        count($event->getCustomParams()) > 0 ? $amount = $event->getCustomParams()[0] : $amount = 0;
+        $validBet = $this->database->isBetValid($amount,$user_id);
+        if (!$validBet->value){
+            foreach ($validBet->getErrors() as $error){
+                $queue->ircNotice($user->nick,$error);
+            }
+            return;
+        }
+
+        // handle bet
+        $roll = Roll::OneToOneHundred();
+        $multiplier = $this->_getBetMultiplier($roll);
+        // handle wins
+        if ($multiplier > 0){
+            $winAmount = $amount * $multiplier;
+            $this->database->addCoinsToUser($user_id,$amount * ($multiplier-1));
+            $msg = "You rolled a {$roll} and won {$winAmount} more coins!";
+
+        }
+        // handle losses
+        else {
+            $this->database->removeCoinsFromUser($user_id,$amount);
+            $msg = "You rolled a {$roll} and lost {$amount} more coins!";
+        }
+
+        $this->database->addNewBet($user_id, $amount, $roll);
+        $queue->ircNotice($nick,$msg);
+        Log::Callback($this->getLogger(),$callback);
     }
 
     /**
@@ -132,9 +158,6 @@ class BetPlugin extends AbstractPlugin
     {
         Log::Command($this->getLogger(),$event);
 
-        //debugging
-        $queue->ircPrivmsg($event->getSource(), 'hilo Command Started. (WIP)');
-
         $callback = new CommandCallback($event,$queue ,strtolower($event->getNick()));
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
     }
@@ -145,7 +168,7 @@ class BetPlugin extends AbstractPlugin
         $event = $callback->commandEvent;
         $user =  $callback->user;
         $source = $event->getSource();
-
+        $nick = $user->nick;
         // is the user in a valid state
         $response = $user->isValidIrc();
         if (!$response->value){
@@ -155,8 +178,64 @@ class BetPlugin extends AbstractPlugin
             return;
         }
 
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($nick);
+        if (!$user_id){
+            $queue->ircPrivmsg($source, "Sorry {$nick}, you must use coins command before betting.");
+            return;
+        }
 
-        $callback->eventQueue->ircPrivmsg($source, 'hilo Command callback success. (WIP)');
-        Log::Event($this->getLogger(),$callback->getAuthCallbackEventName());
+        // get turn
+
+
+    }
+
+    public function betLastCommand(CommandEvent $event, Queue $queue)
+    {
+        $source = $event->getSource();
+        $params = $event->getCustomParams();
+
+        // decide who to target
+        if (count($params) == 0){
+            $nick = $event->getNick();
+        }else {
+            $nick = $params[0];
+        }
+
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($nick);
+        if (!$user_id){
+            $queue->ircPrivmsg($source, "I don't know anyone named {$nick}!");
+            return;
+        }
+    }
+
+    public function betInfoCommand(CommandEvent $event, Queue $queue)
+    {
+        $source = $event->getSource();
+        $params = $event->getCustomParams();
+
+        // decide who to target
+        if (count($params) == 0){
+            $nick = $event->getNick();
+        }else {
+            $nick = $params[0];
+        }
+
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($nick);
+        if (!$user_id){
+            $queue->ircPrivmsg($source, "I don't know anyone named {$nick}!");
+            return;
+        }
+
+    }
+
+    private function _getBetMultiplier($roll)
+    {
+        if ($roll == 100) return 5;
+        if ($roll >= 90) return 3;
+        if ($roll > 50) return 2;
+        return -1;
     }
 }

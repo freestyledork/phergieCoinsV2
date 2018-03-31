@@ -8,6 +8,7 @@
 
 namespace Freestyledork\Phergie\Plugin\Coins\Ext;
 
+use Freestyledork\Phergie\Plugin\Coins\Utils\Log;
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEvent as Event;
@@ -63,7 +64,7 @@ class AuthPlugin extends AbstractPlugin
         $queue = $callback->eventQueue;
         $nick = $callback->user->nick;
 
-        $queue->ircPrivmsg($event->getSource(), "auth attempt received {$nick}" );
+        Log::Line($this->getLogger(),"auth attempt received for {$nick}");
 
         // below might not be needed (overflow protection)
         if (in_array($nick,$this->authCallbacks)) {
