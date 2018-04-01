@@ -92,11 +92,64 @@ class LottoModel extends UserModel
         return $statement->execute([ $user_id,$ticket ]);
     }
 
-
+    /**
+     * @param $user_id
+     * @return bool
+     */
     public function getUserDailyTicketCount($user_id)
     {
-
+        $statement = $this->connection->prepare(
+            'SELECT count(*)
+                        FROM lotto_tickets
+                       WHERE user_id = ? AND DATE(purchase_date) = CURDATE()'
+        );
+        return $statement->execute([ $user_id ]);
     }
 
+    /**
+     * @return bool|\PDOStatement
+     */
+    public function clearAllTickets()
+    {
+        return $this->connection->query('TRUNCATE TABLE lotto_tickets');
+    }
+
+    /**
+     * @param $ticket
+     * @return bool
+     */
+    public function addNewWinningTicket($ticket)
+    {
+        $statement = $this->connection->prepare(
+            'INSERT INTO lotto_wins (ticket) VALUES (?)'
+        );
+        return $statement->execute([ $ticket ]);
+    }
+
+    /**
+     * @param $user_id
+     * @param $amount
+     * @param $ticket
+     * @return bool
+     */
+    public function addUserToWinningTicket($user_id, $amount, $ticket)
+    {
+        $statement = $this->connection->prepare(
+            'UPDATE lotto_wins SET user_id = ?, amount = ? WHERE ticket = ?'
+        );
+        return $statement->execute([ $user_id,$amount,$ticket ]);
+    }
+
+    public function getLastLottoWinner()
+    {
+        $statement = $this->connection->prepare(
+            'SELECT user_id, ticket, amount, date
+                        FROM lotto_wins
+                       WHERE user_id IS NOT NULL
+                    ORDER BY date DESC
+                       LIMIT 1'
+        );
+        return $statement->execute();
+    }
 
 }
