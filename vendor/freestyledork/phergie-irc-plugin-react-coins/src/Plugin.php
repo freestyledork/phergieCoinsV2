@@ -36,7 +36,9 @@ class Plugin extends AbstractPlugin
         'command.coins.last'    => 'coinsLastCommand',
         'command.test'          => 'testCommand',
         'command.worth'         => 'worthCommand',
-        'command.coins.info'    => 'coinsInfoCommand'
+        'command.coins.info'    => 'coinsInfoCommand',
+        'command.bank'          => 'bankCommand',
+        'command.bank.info'     => 'bankInfoCommand',
     ];
 
     /**
@@ -45,8 +47,9 @@ class Plugin extends AbstractPlugin
      * @var array
      */
     protected $callbackEvents = [
-        'coins.callback.coins' => 'coinsCallback',
-        'coins.callback.test'  => 'testCallback'
+        'coins.callback.coins'  => 'coinsCallback',
+        'coins.callback.test'   => 'testCallback',
+        'coins.callback.bank'   => 'bankCallback',
 
     ];
 
@@ -180,7 +183,7 @@ class Plugin extends AbstractPlugin
         // check ability to collect
         $lastCollection = $this->database->getUserLastCollectionTime($user_id);
         $elaspedTime = Time::timeElapsedInSeconds($lastCollection);
-        $minInterval = $this->database->getCollectIntervalInSeconds();
+        $minInterval = Settings::COLLECT_INTERVAL;
         if ($lastCollection !== false && $elaspedTime <= $minInterval){
             // unable to collect
             $ft = Format::formatTime($minInterval - $elaspedTime);
@@ -247,7 +250,8 @@ class Plugin extends AbstractPlugin
 
         // format & return users worth to chat source
         $worth = Format::formatCoinAmount($worth);
-        $queue->ircPrivmsg($source,"{$nick} is currently worth {$worth} coins.");
+        $bankedAmount = $this->database->getUserTotalBankAmount($user_id);
+        $queue->ircPrivmsg($source,"{$nick} is currently worth {$worth} coins and has {$bankedAmount} in the bank");
     }
 
     /**
@@ -308,5 +312,135 @@ class Plugin extends AbstractPlugin
 
         // return info to chat
         $queue->ircPrivmsg($source, "[Total Collections] {$totalCollections} [Average] {$avgCollections} [Age] {$age} days");
+    }
+
+    /**
+     * Handles coin bet command calls
+     *
+     * @param CommandEvent $event
+     * @param Queue $queue
+     */
+    public function bankCommand(CommandEvent $event, Queue $queue)
+    {
+        $nick = $event->getNick();
+        $source = $event->getSource();
+        $params = $event->getCustomParams();
+
+        // make sure values are correct
+        if (($params[0] !== 'withdrawal' && $params[0] !== 'deposit') || !is_numeric($params[1]) || $params[1] <= 0){
+            $queue->ircNotice($nick,'Please use correct format: <bank> <deposit or withdrawal> <amount>');
+            return;
+        }
+
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($nick);
+        if (!$user_id){
+            $queue->ircPrivmsg($source, "I don't know anyone named {$nick}!");
+            return;
+        }
+        $callback = new CommandCallback($event,$queue ,strtolower($event->getNick()), $user_id);
+        $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
+    }
+
+    public function bankCallback(CommandCallback $callback)
+    {
+        $queue = $callback->eventQueue;
+        $event = $callback->commandEvent;
+        $user =  $callback->user;
+        $source = $event->getSource();
+        $params = $event->getCustomParams();
+        $queue = $callback->eventQueue;
+
+        // is the user in a valid state
+        $response = $user->isValidIrc();
+        if (!$response->value)
+        {
+            foreach ($response->getErrors() as $error){
+                $queue->ircNotice($user->nick,$error);
+            }
+            return;
+        }
+
+        // check last bank time
+        $user_id = $user->id;
+        $lastBank = $this->database->getUserLastBankTime($user_id);
+        echo "\n";
+        var_dump($lastBank);
+        echo "\n";
+        if (Time::timeElapsedInSeconds($lastBank) < Settings::BANK_TRANSFER_INTERVAL && $lastBank !== false)
+        {
+            $remaining = Format::formatTime(Settings::BANK_TRANSFER_INTERVAL - Time::timeElapsedInSeconds($lastBank));
+            $queue->ircNotice($user->nick, "You must wait {$remaining} before you can do that again!");
+            return;
+        }
+
+        // handle bank options
+        $fee = $params[1] * Settings::BANK_TRANSFER_FEE;
+        $bankOption = $params[0];
+
+        $bankedAmount = $this->database->getUserTotalBankAmount($user_id);
+        if ($bankOption === 'withdrawal')
+        {
+            $transactionAmount = $params[1] - $fee;
+            if ($bankedAmount > $transactionAmount) {
+                $this->database->addUserBankTransaction($user_id,$transactionAmount);
+                $queue->ircNotice($user->nick, "You successfully withdrew {$params[1]} coins with a {$fee} coins fee");
+                return;
+            }
+                $queue->ircNotice($user->nick, "You only have {$bankedAmount} available, try a lower number");
+                return;
+
+        }
+        if ($bankOption === 'deposit')
+        {
+            $worth = $this->database->getUserWorthById($user_id);
+            $transactionAmount = $params[1] + $fee;
+            echo "\n";
+            var_dump($worth);
+            echo "\n";
+            $available = $worth - $bankedAmount;
+            if ($available > $transactionAmount) {
+                $this->database->addUserBankTransaction($user_id,$transactionAmount);
+                $queue->ircNotice($user->nick, "You successfully deposited {$params[1]} coins with a {$fee} coins fee");
+                return;
+            }
+                $queue->ircNotice($user->nick, "You only have {$available} coins available, try a lower number");
+                return;
+        }
+    }
+
+    public function bankInfoCommand(CommandEvent $event, Queue $queue)
+    {
+        $source = $event->getSource();
+        $params = $event->getCustomParams();
+
+        // decide who to target
+        if (count($params) == 0){
+            $nick = $event->getNick();
+        }else {
+            $nick = $params[0];
+        }
+
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($nick);
+        if (!$user_id){
+            $queue->ircPrivmsg($source, "I don't know anyone named {$nick}!");
+            return;
+        }
+
+        // populate info
+        $bankedAmount = $this->database->getUserTotalBankAmount($user_id);
+
+        $totalDeposits = $this->database->getUserTotalBankDeposits($user_id);
+        $totalWithdrawals = $this->database->getUserTotalBankWithdrawals($user_id);
+        $totalTransactions = $totalDeposits + $totalWithdrawals;
+
+
+        $lastTransaction = $this->database->getUserLastBankTime($user_id);
+        $last = Format::formatTime(Time::timeElapsedInSeconds($lastTransaction));
+
+        // return info to chat
+//        $queue->ircPrivmsg($source, "[Banked] {$bankedAmount} [Last] {$lastTransaction} [Transactions] {$totalTransactions} [Deposits] {$totalDeposits} [Withdrawals] {$totalWithdrawals}");
+        $queue->ircPrivmsg($source, "[Banked] {$bankedAmount} [Last] {$last} [Transactions] {$totalTransactions} [Deposits] {$totalDeposits} [Withdrawals] {$totalWithdrawals}");
     }
 }

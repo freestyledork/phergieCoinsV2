@@ -39,11 +39,12 @@ class CommandCallback
      */
     public $time;
 
-    public function __construct(Event $commandEvent, Queue $queue, $nick){
+    public function __construct(Event $commandEvent, Queue $queue, $nick, $user_id = null){
         $this->user = new User($nick);
         $this->time = time();
         $this->commandEvent = $commandEvent;
         $this->eventQueue = $queue;
+        if ($user_id !== null) $this->user->id = $user_id;
     }
 
     /**

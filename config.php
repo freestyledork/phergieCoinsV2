@@ -13,7 +13,6 @@ use Phergie\Irc\Plugin\React\NickServ\Plugin as NickServPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Plugin as CoinsPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\BetPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\AuthPlugin;
-use Freestyledork\Phergie\Plugin\Coins\Ext\BankPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\CraftPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\LottoPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\MinePlugin;
@@ -67,7 +66,6 @@ $auth       = new AuthPlugin();
 $config     = ['database' => $database];
 $coins      = new CoinsPlugin($config);
 $bet        = new BetPlugin($config);
-$bank       = new BankPlugin($config);
 $craft      = new CraftPlugin($config);
 $mine       = new MinePlugin($config);
 $steal      = new StealPlugin($config);
@@ -99,7 +97,6 @@ return array(
         $coins,
         $auth,
         $bet,
-        $bank,
         $mine,
         $craft,
         $steal,

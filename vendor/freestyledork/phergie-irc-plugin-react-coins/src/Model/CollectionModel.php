@@ -10,8 +10,6 @@ namespace Freestyledork\Phergie\Plugin\Coins\Model;
 
 class CollectionModel extends UserModel
 {
-    protected $minCollectInterval = 120;
-    protected $baseCollectAmount = 200;
 
     public function addNewCollection($user_id, $amount){
         $statement = $this->connection->prepare(
@@ -72,9 +70,6 @@ class CollectionModel extends UserModel
         return $result;
     }
 
-    public function getCollectIntervalInSeconds(){
-        return $this->minCollectInterval* 60;
-    }
 
 
 }

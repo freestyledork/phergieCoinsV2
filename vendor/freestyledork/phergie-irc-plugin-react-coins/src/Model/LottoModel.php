@@ -94,7 +94,7 @@ class LottoModel extends UserModel
 
     /**
      * @param $user_id
-     * @return bool
+     * @return array
      */
     public function getUserDailyTicketCount($user_id)
     {
@@ -103,7 +103,10 @@ class LottoModel extends UserModel
                         FROM lotto_tickets
                        WHERE user_id = ? AND DATE(purchase_date) = CURDATE()'
         );
-        return $statement->execute([ $user_id ]);
+        if ($statement->execute([ $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
     }
 
     /**
@@ -140,6 +143,9 @@ class LottoModel extends UserModel
         return $statement->execute([ $user_id,$amount,$ticket ]);
     }
 
+    /**
+     * @return bool
+     */
     public function getLastLottoWinner()
     {
         $statement = $this->connection->prepare(
@@ -149,7 +155,10 @@ class LottoModel extends UserModel
                     ORDER BY date DESC
                        LIMIT 1'
         );
-        return $statement->execute();
+        if ($statement->execute()) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
     }
 
 }

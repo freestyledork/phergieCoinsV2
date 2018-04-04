@@ -245,4 +245,85 @@ class UserModel
         $diff = time() - $date_time->format('U');
         return floor($diff/ (60*60*24));
     }
+
+    /**
+     * @param $user_id
+     * @return null|\DateTime
+     */
+    public function getUserLastBankTime($user_id){
+        $statement = $this->connection->prepare(
+            'SELECT time
+                        FROM bank_transactions
+                       WHERE user_id = ?
+                   ORDER  BY time DESC
+                       LIMIT 1'
+        );
+        if ($statement->execute([ $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    /**
+     * @param $user_id
+     * @return int
+     */
+    public function getUserTotalBankAmount($user_id){
+        $statement = $this->connection->prepare(
+            'SELECT sum(amount)
+                        FROM bank_transactions
+                       WHERE user_id = ?'
+        );
+        if ($statement->execute([ $user_id ])) {
+            $amount =  $statement->fetchColumn();
+        }
+        if (!$amount) $amount = 0;
+        return $amount;
+    }
+
+    /**
+     * @param $user_id
+     * @param $amount
+     * @return bool
+     */
+    public function addUserBankTransaction($user_id, $amount){
+        $statement = $this->connection->prepare(
+            'INSERT INTO bank_transactions (user_id, amount) VALUES (?,?)'
+        );
+        return $statement->execute([ $user_id,$amount]);
+    }
+
+    /**
+     * @param $user_id
+     * @return int
+     */
+    public function getUserTotalBankDeposits($user_id){
+        $statement = $this->connection->prepare(
+            'SELECT COUNT(*)
+                        FROM bank_transactions
+                       WHERE user_id = ? AND amount > 0'
+        );
+        if ($statement->execute([ $user_id ])) {
+            $amount =  $statement->fetchColumn();
+        }
+        if (!$amount) $amount = 0;
+        return $amount;
+    }
+
+    /**
+     * @param $user_id
+     * @return int
+     */
+    public function getUserTotalBankWithdrawals($user_id){
+        $statement = $this->connection->prepare(
+            'SELECT COUNT(*)
+                        FROM bank_transactions
+                       WHERE user_id = ? AND amount < 0'
+        );
+        if ($statement->execute([ $user_id ])) {
+            $amount =  $statement->fetchColumn();
+        }
+        if (!$amount) $amount = 0;
+        return $amount;
+    }
 }
