@@ -11,9 +11,7 @@ namespace Freestyledork\Phergie\Plugin\Coins\Model;
 use Freestyledork\Phergie\Plugin\Coins\Utils\Format;
 use Freestyledork\Phergie\Plugin\Coins\Utils\Settings;
 use Freestyledork\Phergie\Plugin\Coins\Utils\Time;
-use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
 use Freestyledork\Phergie\Plugin\Coins\Helper\Response;
-use Phergie\Irc\Plugin\React\Command\CommandEvent;
 
 class BetModel extends UserModel
 {
@@ -24,7 +22,10 @@ class BetModel extends UserModel
         parent::__construct($config);
     }
 
-    // todo : add total hilo bets as well
+    /**
+     * @param $user_id
+     * @return mixed
+     */
     public function getUserTotalBets($user_id){
         $statement = $this->connection->prepare(
             'SELECT COUNT(*)
@@ -39,6 +40,10 @@ class BetModel extends UserModel
         return $result;
     }
 
+    /**
+     * @param $user_id
+     * @return mixed
+     */
     public function getUserLastBetTime($user_id){
         $statement = $this->connection->prepare(
             'SELECT time
@@ -57,6 +62,11 @@ class BetModel extends UserModel
         return $result;
     }
 
+    /**
+     * @param $user_id
+     * @param $amount
+     * @param $roll
+     */
     public function addNewBet($user_id, $amount, $roll){
         $statement = $this->connection->prepare(
             'INSERT INTO bets (user_id, amount, roll) VALUES (?,?,?)'
@@ -64,6 +74,11 @@ class BetModel extends UserModel
         $statement->execute([ $user_id,$amount,$roll ]);
     }
 
+    /**
+     * @param $user_id
+     * @param $amount
+     * @param $roll
+     */
     public function addNewBetHilo($user_id, $amount, $roll){
         $statement = $this->connection->prepare(
             'INSERT INTO bets_hilo (user_id, amount, first_roll) VALUES (?,?,?)'
@@ -71,6 +86,13 @@ class BetModel extends UserModel
         $statement->execute([ $user_id,$amount,$roll ]);
     }
 
+
+    /**
+     *
+     *
+     * @param $user_id
+     * @return int
+     */
     public function getBetHiloTurn($user_id){
         $statement = $this->connection->prepare(
             'SELECT COUNT(*)
@@ -84,6 +106,21 @@ class BetModel extends UserModel
             return 2;
         }
         return 1;
+    }
+
+    public function getBetHiloFirstRoll($user_id)
+    {
+        $statement = $this->connection->prepare(
+            'SELECT first_roll
+                        FROM bets_hilo
+                       WHERE user_id = ? AND second_roll IS NULL 
+                   ORDER  BY time DESC
+                       LIMIT 1'
+        );
+        if ($statement->execute([ $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
     }
 
     /**
@@ -112,7 +149,7 @@ class BetModel extends UserModel
             return $response;
         }
         // confirm they have enough
-        if ($betAmount > $this->getUserWorthById($user_id)){
+        if ($betAmount > $this->getUserAvailableWorth($user_id)){
             $response->value = false;
             $response->addError("you don't have that much to bet");
             return $response;

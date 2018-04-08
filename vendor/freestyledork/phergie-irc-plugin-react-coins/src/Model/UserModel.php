@@ -326,4 +326,16 @@ class UserModel
         if (!$amount) $amount = 0;
         return $amount;
     }
+
+    /**
+     * @param $user_id
+     * @return bool|int|mixed
+     */
+    public function getUserAvailableWorth($user_id)
+    {
+        $worth =$this->getUserWorthById($user_id);
+        $banked = $this->getUserTotalBankAmount($user_id);
+
+        return $worth-$banked;
+    }
 }

@@ -13,6 +13,8 @@ class Roll
 {
 
     /**
+     * rolls a number between 1-100
+     *
      * @return int
      */
     public static function OneToOneHundred(){
@@ -20,7 +22,9 @@ class Roll
     }
 
     /**
-     * @param $rolls
+     * returns a roll number not in submitted rolls
+     *
+     * @param array $rolls
      * @return int
      */
     public static function UniqueOneToOneHundred($rolls){
@@ -32,6 +36,31 @@ class Roll
     }
 
     /**
+     * rolls a number between 0-100
+     *
+     * @return int
+     */
+    public static function ZeroToOneHundred(){
+        return mt_rand (0,100);
+    }
+
+    /**
+     * returns a roll number not in submitted rolls
+     *
+     * @param array $rolls
+     * @return int
+     */
+    public static function UniqueZeroToOneHundred($rolls){
+        $roll = self::ZeroToOneHundred();
+        while(in_array($roll,$rolls)){
+            $roll = self::ZeroToOneHundred();
+        }
+        return $roll;
+    }
+
+    /**
+     * rolls a new collection total
+     *
      * @return int
      */
     public static function CollectionAmount(){
@@ -39,6 +68,8 @@ class Roll
     }
 
     /**
+     * string format 0-9|0-9|0-9
+     *
      * @return string
      */
     public static function LottoTicket(){
@@ -50,6 +81,7 @@ class Roll
     }
 
     /**
+     * 0-1 based success roll
      *
      * @param $goal float
      * @return bool

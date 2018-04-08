@@ -25,10 +25,12 @@ class BetPlugin extends AbstractPlugin
      * @var array
      */
     protected $commandEvents = [
-        'command.bet'         => 'betCommand',
-        'command.bet.hilo'    => 'hiloCommand',
-        'command.bet.last'    => 'betLastCommand',
-        'command.bet.info'    => 'betInfoCommand'
+        'command.bet'           => 'betCommand',
+        'command.bet.hilo'      => 'hiloCommand',
+        'command.bet.last'      => 'betLastCommand',
+        'command.bet.info'      => 'betInfoCommand',
+        'command.high'          => 'highCommand',
+        'command.low'           => 'lowCommand'
     ];
 
     /**
@@ -93,6 +95,9 @@ class BetPlugin extends AbstractPlugin
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
     }
 
+    /**
+     * @param CommandCallback $callback
+     */
     public function betCallback(CommandCallback $callback)
     {
         $queue = $callback->eventQueue;
@@ -162,6 +167,9 @@ class BetPlugin extends AbstractPlugin
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
     }
 
+    /**
+     * @param CommandCallback $callback
+     */
     public function hiloCallback(CommandCallback $callback)
     {
         $queue = $callback->eventQueue;
@@ -186,10 +194,41 @@ class BetPlugin extends AbstractPlugin
         }
 
         // get turn
+        $turn = $this->database->getBetHiloTurn($user_id);
+        if ($turn === 1){
+            //start a new turn
+
+            // validate bet amount
+            count($event->getCustomParams()) > 0 ? $amount = $event->getCustomParams()[0] : $amount = 0;
+            $validBet = $this->database->isBetValid($amount,$user_id);
+            if (!$validBet->value){
+                foreach ($validBet->getErrors() as $error){
+                    $queue->ircNotice($nick,$error);
+                }
+                return;
+            }
+
+            // log and return first roll
+            $roll = Roll::ZeroToOneHundred();
+            $this->database->addNewBetHilo($user_id,$amount,$roll);
+            $msg = "Your first roll is {$roll}";
+            $queue->ircNotice($nick,$msg);
+
+        }else{
+            //finish old turn
+            $roll = $this->database->getBetHiloFirstRoll($user_id);
+            // validate second command
+            $msg = "Your first roll was {$roll}";
+            $queue->ircNotice($nick,$msg);
+        }
 
 
     }
 
+    /**
+     * @param CommandEvent $event
+     * @param Queue $queue
+     */
     public function betLastCommand(CommandEvent $event, Queue $queue)
     {
         $source = $event->getSource();
@@ -210,6 +249,10 @@ class BetPlugin extends AbstractPlugin
         }
     }
 
+    /**
+     * @param CommandEvent $event
+     * @param Queue $queue
+     */
     public function betInfoCommand(CommandEvent $event, Queue $queue)
     {
         $source = $event->getSource();
@@ -231,11 +274,43 @@ class BetPlugin extends AbstractPlugin
 
     }
 
+    /**
+     * @param CommandEvent $event
+     * @param Queue $queue
+     */
+    public function highCommand(CommandEvent $event, Queue $queue)
+    {
+
+    }
+
+    /**
+     * @param CommandEvent $event
+     * @param Queue $queue
+     */
+    public function lowCommand(CommandEvent $event, Queue $queue)
+    {
+
+    }
+
+    /**
+     * @param $roll
+     * @return int
+     */
     private function _getBetMultiplier($roll)
     {
         if ($roll == 100) return 5;
         if ($roll >= 90) return 3;
         if ($roll > 50) return 2;
+        return -1;
+    }
+
+    /**
+     * @param $roll
+     * @return int
+     */
+    private function _getBetHiloMultiplier($roll)
+    {
+        // find bet
         return -1;
     }
 }
