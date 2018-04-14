@@ -292,6 +292,17 @@ class BetPlugin extends AbstractPlugin
 
     }
 
+
+    private function _handleHiloHighCommand()
+    {
+
+    }
+
+    private function _handleHiloLowCommand()
+    {
+
+    }
+
     /**
      * @param $roll
      * @return int
