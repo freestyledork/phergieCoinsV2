@@ -9,6 +9,9 @@
 
 namespace Freestyledork\Phergie\Plugin\Coins\Model;
 
+use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
+use Freestyledork\Phergie\Plugin\Coins\Utils\Settings;
+
 class LottoModel extends UserModel
 {
     /**
@@ -47,7 +50,7 @@ class LottoModel extends UserModel
      * @param $user_id
      * @return array
      */
-    public function getUserTicketNumbers($user_id)
+    public function getUserTickets($user_id)
     {
         $statement = $this->connection->prepare(
             'SELECT ticket
@@ -76,21 +79,26 @@ class LottoModel extends UserModel
     }
 
     /**
+     * returns the users new ticket or false on failure
+     *
      * @param int $user_id
-     * @param string $ticket
-     * @return bool
+     * @return string|bool
      */
-    public function addNewUserTicket($user_id, $ticket)
+    public function addNewUserTicket($user_id)
     {
+        $ticket = Roll::LottoTicket();
         $statement = $this->connection->prepare(
             'INSERT INTO lotto_tickets (user_id, ticket) VALUES (?,?)'
         );
-        return $statement->execute([ $user_id,$ticket ]);
+        if ($statement->execute([ $user_id,$ticket ])){
+            return $ticket;
+        }
+        return false;
     }
 
     /**
      * @param $user_id
-     * @return array
+     * @return int
      */
     public function getUserDailyTicketCount($user_id)
     {
@@ -140,7 +148,7 @@ class LottoModel extends UserModel
     }
 
     /**
-     * @return bool
+     * @return bool|array
      */
     public function getLastLottoWinner()
     {
@@ -152,9 +160,108 @@ class LottoModel extends UserModel
                        LIMIT 1'
         );
         if ($statement->execute()) {
+            $result = $statement->fetch(\PDO::FETCH_ASSOC);
+        }
+        return $result;
+    }
+
+    public function getGrandPrizeAmount()
+    {
+        $base = Settings::LOTTO_BASE_PRIZE;
+        $tickets = $this->getTotalTickets();
+        $days = $this->getDaysSinceLastWin();
+        return $base + ($tickets * Settings::LOTTO_TICKET_COST) + ($days * Settings::LOTTO_DAILY_BONUS);
+    }
+
+    /**
+     * @return int
+     */
+    public function getDaysSinceLastWin()
+    {
+        $statement = $this->connection->prepare(
+            'SELECT DATEDIFF(NOW(),date) 
+                        FROM lotto_wins 
+                    ORDER BY date desc 
+                       LIMIT 1'
+        );
+        if ($statement->execute()) {
             $result = $statement->fetchColumn();
         }
         return $result;
+    }
+
+    /**
+     * @return int|bool
+     */
+    public function getTotalPlayers()
+    {
+        $result = false;
+        $statement = $this->connection->prepare(
+            'SELECT count(DISTINCT user_id) from lotto_tickets'
+        );
+        if ($statement->execute()) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    /**
+     * @return int|bool
+     */
+    public function isWinToday()
+    {
+        $statement = $this->connection->prepare(
+            'SELECT Count(*) 
+                        FROM lotto_wins 
+                       WHERE CAST(date AS DATE) = CAST(now() AS DATE)'
+        );
+        if ($statement->execute()) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    /**
+     * @return bool|string
+     */
+    public function getTodayTicket()
+    {
+        $statement = $this->connection->prepare(
+            'SELECT ticket
+                        FROM lotto_drawings
+                       WHERE CAST(date AS DATE) = CAST(now() AS DATE)'
+        );
+        if ($statement->execute()) {
+            $ticket = $statement->fetchColumn();
+        }
+        if ($ticket === false){
+            $ticket = $this->addNewTicketDrawing();
+        }
+        return $ticket;
+    }
+
+    /**
+     * @return bool|string
+     */
+    public function addNewTicketDrawing()
+    {
+        $ticket = Roll::LottoTicket();
+        $statement = $this->connection->prepare(
+            'INSERT INTO lotto_drawings (ticket) VALUES (?)'
+        );
+        if ($statement->execute([ $ticket ])) {
+            return $ticket;
+        }
+        return false;
+    }
+
+    /**
+     * @param $ticket
+     * @return bool
+     */
+    public function isWinningTicket($ticket)
+    {
+        return ($this->getTodayTicket() == $ticket)? true : false;
     }
 
 }
