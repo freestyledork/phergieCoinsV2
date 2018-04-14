@@ -219,6 +219,10 @@ class UserModel
         return false;
     }
 
+    /**
+     * @param User $user
+     * @return bool
+     */
     public function isNewUser(User $user){
         $user_id = $this->getUserIdByNick($user->nick);
         if (!$user_id && $user->accountName !== 'Not Registered'){
@@ -227,6 +231,10 @@ class UserModel
         return ($user_id === false);
     }
 
+    /**
+     * @param $user_id
+     * @return mixed
+     */
     public function getUserCreationTime($user_id){
         $statement = $this->connection->prepare(
             'SELECT creation
@@ -239,6 +247,10 @@ class UserModel
         return $result;
     }
 
+    /**
+     * @param $user_id
+     * @return float
+     */
     public function getUserAge($user_id){
         $creationDate = $this->getUserCreationTime($user_id);
         $date_time = date_create($creationDate);
