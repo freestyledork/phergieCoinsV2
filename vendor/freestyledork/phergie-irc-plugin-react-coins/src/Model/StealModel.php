@@ -105,4 +105,36 @@ class StealModel extends UserModel
         }
         return $successRate;
     }
+
+    public function getUserWorstLoss($user_id)
+    {
+        $statement = $this->connection->prepare(
+            'SELECT amount 
+                        FROM steal_attempts
+                       WHERE user_id = ?
+                         AND RESULT = 0
+                    ORDER BY amount DESC 
+                       LIMIT 1'
+        );
+        if ($statement->execute([ $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    public function getUserHighestSteal($user_id)
+    {
+        $statement = $this->connection->prepare(
+            'SELECT amount 
+                        FROM steal_attempts
+                       WHERE user_id = ?
+                         AND RESULT = 1
+                    ORDER BY amount DESC 
+                       LIMIT 1'
+        );
+        if ($statement->execute([ $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
 }
