@@ -73,17 +73,20 @@ class StealModel extends UserModel
      * @param $user_id
      * @param $amount
      * @param $result
+     * @param $target_id
      * @return bool
      */
-    public function addNewStealAttempt($user_id, $amount, $result)
+    public function addNewStealAttempt($user_id, $amount, $result, $target_id)
     {
         $statement = $this->connection->prepare(
-            'INSERT INTO steal_attempts (user_id, amount, result) VALUES (?,?,?)'
+            'INSERT INTO steal_attempts (user_id, amount, result, target_id) VALUES (?,?,?,?)'
         );
-        return $statement->execute([ $user_id,$amount,$result]);
+        return $statement->execute([ $user_id,$amount,$result,$target_id]);
     }
 
     /**
+     * calculates the current success rate for the user
+     *
      * @param $user_id
      * @return float
      */
