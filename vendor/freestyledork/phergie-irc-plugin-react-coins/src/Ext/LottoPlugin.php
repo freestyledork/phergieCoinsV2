@@ -197,7 +197,6 @@ class LottoPlugin extends AbstractPlugin
     public function lottoTicketsCommand(CommandEvent $event, Queue $queue)
     {
         $params = $event->getCustomParams();
-        $source = $event->getSource();
         Log::Command($this->getLogger(),$event);
 
         // find target
