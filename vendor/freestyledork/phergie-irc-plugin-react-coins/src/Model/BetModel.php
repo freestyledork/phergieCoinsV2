@@ -28,13 +28,12 @@ class BetModel extends UserModel
      */
     public function getUserTotalBets($user_id){
         $statement = $this->connection->prepare(
-            'SELECT COUNT(*)
-                        FROM bets
-                  INNER JOIN bets_hilo
-                          ON bets.user_id = bets_hilo.user_id
-                       WHERE bets.user_id = ?'
+            'SELECT (SELECT count(*) FROM bets WHERE user_id = :user_id) 
+                             +
+                             (SELECT count(*) FROM bets_hilo WHERE user_id = :user_id)
+                          AS total'
         );
-        if ($statement->execute([ $user_id ])) {
+        if ($statement->execute([ ':user_id' => $user_id ])) {
             $result = $statement->fetchColumn();
         }
         return $result;
@@ -86,7 +85,6 @@ class BetModel extends UserModel
         $statement->execute([ $user_id,$amount,$roll ]);
     }
 
-
     /**
      *
      *
@@ -122,6 +120,59 @@ class BetModel extends UserModel
         }
         return $result;
     }
+
+    /**
+     * @param $user_id
+     * @return bool|int
+     */
+    public function getUserMostWon($user_id)
+    {
+        $statement = $this->connection->prepare(
+            'SELECT payout FROM bets WHERE user_id = :user_id
+                       UNION
+                      SELECT payout FROM bets_hilo WHERE user_id = :user_id 
+                    ORDER BY payout DESC LIMIT 1'
+        );
+        if ($statement->execute([ ':user_id' => $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    /**
+     * @param $user_id
+     * @return bool|int
+     */
+    public function getUserMostLost($user_id)
+    {
+        $statement = $this->connection->prepare(
+            'SELECT payout FROM bets 
+                       WHERE user_id = :user_id AND payout IS NOT NULL
+                       UNION 
+                      SELECT payout FROM bets_hilo 
+                       WHERE user_id = :user_id AND payout IS NOT NULL 
+                    ORDER BY payout ASC LIMIT 1'
+        );
+        if ($statement->execute([ ':user_id' => $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    public function getUserTotalBetWins($user_id)
+    {
+        $statement = $this->connection->prepare(
+            'SELECT (SELECT count(*) FROM bets WHERE payout > 0 AND user_id = :user_id)
+                             +
+                             (SELECT count(*) FROM bets_hilo WHERE payout > 0 AND user_id = :user_id)
+                          AS total'
+        );
+        if ($statement->execute([ ':user_id' => $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
 
     /**
      * validates the bet amount for the user, returns Response Obj

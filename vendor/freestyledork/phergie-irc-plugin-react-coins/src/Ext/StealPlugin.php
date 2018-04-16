@@ -164,6 +164,12 @@ class StealPlugin extends AbstractPlugin
         //$queue->ircPrivmsg($source, 'Steal Command callback success. (WIP)');
     }
 
+    /**
+     * gets steal info for user and outputs to irc line
+     *
+     * @param CommandEvent $event
+     * @param Queue $queue
+     */
     public function stealInfoCommand(CommandEvent $event, Queue $queue)
     {
         $params = $event->getCustomParams();
@@ -191,7 +197,7 @@ class StealPlugin extends AbstractPlugin
         $mostStolen = $this->database->getUserHighestSteal($user_id);
         $mostPaid = $this->database->getUserWorstLoss($user_id);
         // TODO: remove in production
-        $currentSuccessRate = floor(($this->database->getUserStealSuccessRate($user_id)/$tSteals)*100);
+        $currentSuccessRate = floor($this->database->getUserStealSuccessRate($user_id)*100);
 
         // send message
         $msg  = "[Total Attempts] {$tSteals} [Last] {$lastSteal} [Most Stolen] {$mostStolen}";

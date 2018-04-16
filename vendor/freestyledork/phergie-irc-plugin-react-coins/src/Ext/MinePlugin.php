@@ -140,7 +140,7 @@ class MinePlugin extends AbstractPlugin
     public function addConnection(ConnectionInterface $connection)
     {
         $this->connection = $connection;
-        $this->loop->addPeriodicTimer(30, array($this, 'myTimerCallback'));
+        //$this->loop->addPeriodicTimer(30, array($this, 'myTimerCallback'));
     }
 
     public function myTimerCallback(TimerInterface $timer)

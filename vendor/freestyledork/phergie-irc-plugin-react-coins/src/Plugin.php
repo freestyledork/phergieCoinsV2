@@ -36,6 +36,7 @@ class Plugin extends AbstractPlugin
         'command.coins.last'    => 'coinsLastCommand',
         'command.test'          => 'testCommand',
         'command.worth'         => 'worthCommand',
+        'command.worth.info'    => 'worthInfoCommand',
         'command.coins.info'    => 'coinsInfoCommand',
         'command.bank'          => 'bankCommand',
         'command.bank.info'     => 'bankInfoCommand',
@@ -250,8 +251,8 @@ class Plugin extends AbstractPlugin
 
         // format & return users worth to chat source
         $worth = Format::formatCoinAmount($worth);
-        $bankedAmount = $this->database->getUserTotalBankAmount($user_id);
-        $queue->ircPrivmsg($source,"{$nick} is currently worth {$worth} coins and has {$bankedAmount} in the bank");
+
+        $queue->ircPrivmsg($source,"{$nick} is currently worth {$worth} coins.");
     }
 
     /**
@@ -364,9 +365,7 @@ class Plugin extends AbstractPlugin
         // check last bank time
         $user_id = $user->id;
         $lastBank = $this->database->getUserLastBankTime($user_id);
-        echo "\n";
-        var_dump($lastBank);
-        echo "\n";
+
         if (Time::timeElapsedInSeconds($lastBank) < Settings::BANK_TRANSFER_INTERVAL && $lastBank !== false)
         {
             $remaining = Format::formatTime(Settings::BANK_TRANSFER_INTERVAL - Time::timeElapsedInSeconds($lastBank));
@@ -395,9 +394,7 @@ class Plugin extends AbstractPlugin
         {
             $worth = $this->database->getUserWorthById($user_id);
             $transactionAmount = $params[1] + $fee;
-            echo "\n";
-            var_dump($worth);
-            echo "\n";
+
             $available = $worth - $bankedAmount;
             if ($available > $transactionAmount) {
                 $this->database->addUserBankTransaction($user_id,$transactionAmount);
@@ -440,7 +437,37 @@ class Plugin extends AbstractPlugin
         $last = Format::formatTime(Time::timeElapsedInSeconds($lastTransaction));
 
         // return info to chat
-//        $queue->ircPrivmsg($source, "[Banked] {$bankedAmount} [Last] {$lastTransaction} [Transactions] {$totalTransactions} [Deposits] {$totalDeposits} [Withdrawals] {$totalWithdrawals}");
-        $queue->ircPrivmsg($source, "[Banked] {$bankedAmount} [Last] {$last} [Transactions] {$totalTransactions} [Deposits] {$totalDeposits} [Withdrawals] {$totalWithdrawals}");
+        $msg ="[Banked] {$bankedAmount} [Last] {$last} [Transactions] {$totalTransactions}";
+        $msg .= " [Deposits] {$totalDeposits} [Withdrawals] {$totalWithdrawals}";
+        $queue->ircPrivmsg($source, $msg);
+    }
+
+    public function worthInfoCommand(CommandEvent $event, Queue $queue)
+    {
+        $source = $event->getSource();
+        $params = $event->getCustomParams();
+
+        // decide who to target
+        if (count($params) == 0){
+            $nick = $event->getNick();
+        }else {
+            $nick = $params[0];
+        }
+
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($nick);
+        if (!$user_id){
+            $queue->ircPrivmsg($source, "I don't know anyone named {$nick}!");
+            return;
+        }
+
+        // populate info
+        $bankedAmount = $this->database->getUserTotalBankAmount($user_id);
+        $worth = $this->database->getUserWorthById($user_id);
+        $available = $worth - $bankedAmount;
+
+        // return info to chat
+        $msg ="[Available] {$available} [Banked] {$bankedAmount} [Total] {$worth}";
+        $queue->ircPrivmsg($source, $msg);
     }
 }

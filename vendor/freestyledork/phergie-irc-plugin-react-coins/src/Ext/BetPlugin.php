@@ -272,6 +272,17 @@ class BetPlugin extends AbstractPlugin
             return;
         }
 
+        $totalBets = $this->database->getUserTotalBets($user_id);
+        $lastBet = $this->database->getUserLastBetTime($user_id);
+        $mostWon = $this->database->getUserMostWon($user_id);
+        $mostLost = $this->database->getUserMostLost($user_id);
+        $winRate = floor(($this->database->getUserTotalBetWins($user_id)/$totalBets)*100);
+
+        // send message
+        $msg  = "[Total Bets] {$totalBets} [Last] {$lastBet} [Biggest Win] {$mostWon}";
+        $msg .= "[Biggest Loss] {$mostLost} [Win Rate] {$winRate}%";
+        $queue->ircPrivmsg($event->getSource(), $msg);
+
     }
 
     /**
