@@ -9,7 +9,7 @@
 namespace Freestyledork\Phergie\Plugin\Coins\Model;
 
 use Freestyledork\Phergie\Plugin\Coins\Utils\Format;
-use Freestyledork\Phergie\Plugin\Coins\Utils\Settings;
+use Freestyledork\Phergie\Plugin\Coins\Config\Settings;
 use Freestyledork\Phergie\Plugin\Coins\Utils\Time;
 use Freestyledork\Phergie\Plugin\Coins\Helper\Response;
 

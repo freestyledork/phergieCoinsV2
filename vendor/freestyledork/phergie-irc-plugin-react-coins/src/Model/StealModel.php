@@ -10,7 +10,7 @@
 namespace Freestyledork\Phergie\Plugin\Coins\Model;
 
 use Freestyledork\Phergie\Plugin\Coins\Utils\Format;
-use Freestyledork\Phergie\Plugin\Coins\Utils\Settings;
+use Freestyledork\Phergie\Plugin\Coins\Config\Settings;
 use Freestyledork\Phergie\Plugin\Coins\Utils\Time;
 use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
 
@@ -102,7 +102,7 @@ class StealModel extends UserModel
         if ($statement->execute([ $user_id,$resetDuration ] )){
             $result = $statement->fetchColumn();
             while ($result > 0){
-                $successRate = $successRate / 2;
+                $successRate /= 2;
                 $result--;
             }
         }

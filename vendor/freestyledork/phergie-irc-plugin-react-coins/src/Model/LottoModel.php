@@ -10,7 +10,7 @@
 namespace Freestyledork\Phergie\Plugin\Coins\Model;
 
 use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
-use Freestyledork\Phergie\Plugin\Coins\Utils\Settings;
+use Freestyledork\Phergie\Plugin\Coins\Config\Settings;
 
 class LottoModel extends UserModel
 {

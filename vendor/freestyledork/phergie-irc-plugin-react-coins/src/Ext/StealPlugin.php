@@ -9,7 +9,7 @@
 namespace Freestyledork\Phergie\Plugin\Coins\Ext;
 
 use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
-use Freestyledork\Phergie\Plugin\Coins\Utils\Settings;
+use Freestyledork\Phergie\Plugin\Coins\Config\Settings;
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as CommandEvent;
@@ -68,7 +68,7 @@ class StealPlugin extends AbstractPlugin
     }
 
     /**
-     * Handles coin bet command calls
+     * Handles coin steal command calls
      * Usage: <nick> <amount>
      *
      * @param CommandEvent $event
