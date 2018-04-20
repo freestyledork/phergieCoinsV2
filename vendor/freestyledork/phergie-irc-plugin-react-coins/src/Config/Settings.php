@@ -6,7 +6,7 @@
  * Time: 3:51 PM
  */
 
-namespace Freestyledork\Phergie\Plugin\Coins\Utils;
+namespace Freestyledork\Phergie\Plugin\Coins\Config;
 
 
 class Settings
@@ -28,6 +28,7 @@ class Settings
     const STEAL_RESET_INTERVAL          = 60*60*12;    // reset base success rate after this time passed
     const BANK_TRANSFER_INTERVAL        = 60*60*2;     // 2 hours in seconds
     const BANK_TRANSFER_FEE             = .05;         // value * transfer amount
-
+    const GIVE_INTERVAL                 = 60*20;
+    const GIVE_MAX_PERCENT              = .1;
     
 }
