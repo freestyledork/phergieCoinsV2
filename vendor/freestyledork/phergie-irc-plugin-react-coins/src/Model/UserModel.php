@@ -255,6 +255,7 @@ class UserModel
         $creationDate = $this->getUserCreationTime($user_id);
         $date_time = date_create($creationDate);
         $diff = time() - $date_time->format('U');
+
         return floor($diff/ (60*60*24));
     }
 
@@ -294,6 +295,10 @@ class UserModel
     }
 
     /**
+     * adds a entry to the bank transaction db.
+     * positive numbers for deposits
+     * negative numbers for withdrawals
+     *
      * @param $user_id
      * @param $amount
      * @return bool

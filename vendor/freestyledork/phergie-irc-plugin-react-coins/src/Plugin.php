@@ -165,7 +165,6 @@ class Plugin extends AbstractPlugin
 
         // is the user already registered with coins
         $newUser = $this->database->isNewUser($user);
-        var_dump($newUser);
         if ($newUser && $user->canRegister()){
             if ($user->accountName !== 'Not Registered'){
                 $this->database->addNewRegisteredUser($user->accountName ,$user->nick);
@@ -382,7 +381,8 @@ class Plugin extends AbstractPlugin
         {
             $transactionAmount = $params[1] - $fee;
             if ($bankedAmount > $transactionAmount) {
-                $this->database->addUserBankTransaction($user_id,$transactionAmount);
+                $this->database->addUserBankTransaction($user_id,$transactionAmount*-1);
+                $this->database->removeCoinsFromUser($user_id,$fee);
                 $queue->ircNotice($user->nick, "You successfully withdrew {$params[1]} coins with a {$fee} coins fee");
                 return;
             }
@@ -398,6 +398,7 @@ class Plugin extends AbstractPlugin
             $available = $worth - $bankedAmount;
             if ($available > $transactionAmount) {
                 $this->database->addUserBankTransaction($user_id,$transactionAmount);
+                $this->database->removeCoinsFromUser($user_id,$fee);
                 $queue->ircNotice($user->nick, "You successfully deposited {$params[1]} coins with a {$fee} coins fee");
                 return;
             }
