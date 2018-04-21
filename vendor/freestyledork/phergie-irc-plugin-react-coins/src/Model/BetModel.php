@@ -65,12 +65,13 @@ class BetModel extends UserModel
      * @param $user_id
      * @param $amount
      * @param $roll
+     * @param $payout
      */
-    public function addNewBet($user_id, $amount, $roll){
+    public function addNewBet($user_id, $amount, $roll, $payout){
         $statement = $this->connection->prepare(
-            'INSERT INTO bets (user_id, amount, roll) VALUES (?,?,?)'
+            'INSERT INTO bets (user_id, amount, roll, payout) VALUES (?,?,?,?)'
         );
-        $statement->execute([ $user_id,$amount,$roll ]);
+        $statement->execute([ $user_id,$amount,$roll,$payout ]);
     }
 
     /**
@@ -83,6 +84,28 @@ class BetModel extends UserModel
             'INSERT INTO bets_hilo (user_id, amount, first_roll) VALUES (?,?,?)'
         );
         $statement->execute([ $user_id,$amount,$roll ]);
+    }
+
+    /**
+     *
+     * @param $user_id
+     * @param $guess
+     * @param $sRoll
+     * @param $payout
+     */
+    public function updateBetHiloTurn($user_id, $guess, $sRoll, $payout)
+    {
+        $statement = $this->connection->prepare(
+            'UPDATE bets_hilo 
+                         SET guess = :guess, second_roll = :sRoll, payout = :payout 
+                       WHERE user_id = :user_id AND guess IS NULL'
+        );
+        $binds = array( ':guess'    => $guess,
+                        ':sRoll'    => $sRoll,
+                        ':payout'   => $payout,
+                        ':user_id'  => $user_id,
+        );
+        $statement->execute($binds);
     }
 
     /**
@@ -110,6 +133,21 @@ class BetModel extends UserModel
     {
         $statement = $this->connection->prepare(
             'SELECT first_roll
+                        FROM bets_hilo
+                       WHERE user_id = ? AND second_roll IS NULL 
+                   ORDER  BY time DESC
+                       LIMIT 1'
+        );
+        if ($statement->execute([ $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    public function getBetHiloFirstRollBetAmount($user_id)
+    {
+        $statement = $this->connection->prepare(
+            'SELECT amount
                         FROM bets_hilo
                        WHERE user_id = ? AND second_roll IS NULL 
                    ORDER  BY time DESC

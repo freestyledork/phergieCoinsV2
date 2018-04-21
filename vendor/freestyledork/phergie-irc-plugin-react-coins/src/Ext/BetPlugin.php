@@ -8,6 +8,7 @@
 
 namespace Freestyledork\Phergie\Plugin\Coins\Ext;
 
+use Freestyledork\Phergie\Plugin\Coins\Config\Settings;
 use Freestyledork\Phergie\Plugin\Coins\Helper\Response;
 use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
 use Phergie\Irc\Bot\React\AbstractPlugin;
@@ -41,6 +42,8 @@ class BetPlugin extends AbstractPlugin
     protected $callbackEvents = [
         'coins.callback.bet'        => 'betCallback',
         'coins.callback.bet.hilo'   => 'hiloCallback',
+        'coins.callback.high'       => 'highCallback',
+        'coins.callback.low'        => 'lowCallback'
     ];
 
     /**
@@ -51,12 +54,6 @@ class BetPlugin extends AbstractPlugin
 
     /**
      * Accepts plugin configuration.
-     *
-     * Supported keys:
-     *
-     * min-collect-interval - time in minutes between collections
-     *
-     * TODO add cost to other plugins
      *
      * @param array $config
      * @throws \InvalidArgumentException if an unsupported database is passed.
@@ -138,17 +135,18 @@ class BetPlugin extends AbstractPlugin
         // handle wins
         if ($multiplier > 0){
             $winAmount = $amount * $multiplier;
+            $this->database->addNewBet($user_id, $amount, $roll,$winAmount);
             $this->database->addCoinsToUser($user_id,$amount * ($multiplier-1));
             $msg = "You rolled a {$roll} and won {$winAmount} more coins!";
 
         }
         // handle losses
         else {
+            $this->database->addNewBet($user_id, $amount, $roll,$amount*-1);
             $this->database->removeCoinsFromUser($user_id,$amount);
             $msg = "You rolled a {$roll} and lost {$amount} more coins!";
         }
 
-        $this->database->addNewBet($user_id, $amount, $roll);
         $queue->ircNotice($nick,$msg);
         Log::Callback($this->getLogger(),$callback);
     }
@@ -211,6 +209,7 @@ class BetPlugin extends AbstractPlugin
             // log and return first roll
             $roll = Roll::ZeroToOneHundred();
             $this->database->addNewBetHilo($user_id,$amount,$roll);
+            $this->database->removeCoinsFromUser($user_id,$amount);
             $msg = "Your first roll is {$roll}";
             $queue->ircNotice($nick,$msg);
 
@@ -218,12 +217,131 @@ class BetPlugin extends AbstractPlugin
             //finish old turn
             $roll = $this->database->getBetHiloFirstRoll($user_id);
             // validate second command
-            $msg = "Your first roll was {$roll}";
+            $msg = "Your first roll was {$roll}. Please choose if your next roll will be <high> or <low>";
             $queue->ircNotice($nick,$msg);
         }
 
+    }
+
+    /**
+     * @param CommandEvent $event
+     * @param Queue $queue
+     */
+    public function highCommand(CommandEvent $event, Queue $queue)
+    {
+        // TODO: pre validation
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($event->getNick());
+        if (!$user_id){
+            $msg = "Sorry {$event->getNick()}, you must use coins command before attempting to bet.";
+            $queue->ircNotice($event->getNick(), $msg);
+            return;
+        }
+        $turn = $this->database->getBetHiloTurn($user_id);
+        if ($turn !== 2) {
+            $msg = "Sorry {$event->getNick()}, looks like your trying to guess before you started a turn.";
+            $queue->ircNotice($event->getNick(), $msg);
+            return;
+        }
+
+        $callback = new CommandCallback($event,$queue ,strtolower($event->getNick()));
+        $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
 
     }
+
+    /**
+     * @param CommandEvent $event
+     * @param Queue $queue
+     */
+    public function lowCommand(CommandEvent $event, Queue $queue)
+    {
+        // TODO: pre validation
+        // check user exists
+        $user_id = $this->database->getUserIdByNick($event->getNick());
+        if (!$user_id){
+            $msg = "Sorry {$event->getNick()}, you must use coins command before attempting to bet.";
+            $queue->ircNotice($event->getNick(), $msg);
+            return;
+        }
+        $turn = $this->database->getBetHiloTurn($user_id);
+        if ($turn !== 2) {
+            $msg = "Sorry {$event->getNick()}, looks like your trying to guess before you started a turn.";
+            $queue->ircNotice($event->getNick(), $msg);
+            return;
+        }
+
+        $callback = new CommandCallback($event,$queue ,strtolower($event->getNick()));
+        $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
+    }
+
+    public function highCallback(CommandCallback $callback)
+    {
+        $queue = $callback->eventQueue;
+        $event = $callback->commandEvent;
+        $user =  $callback->user;
+        $source = $event->getSource();
+        $nick = $user->nick;
+        // is the user in a valid state
+        $response = $user->isValidIrc();
+        if (!$response->value){
+            foreach ($response->getErrors() as $error){
+                $queue->ircNotice($user->nick,$error);
+            }
+            return;
+        }
+        $user_id = $this->database->getUserIdByNick($nick);
+        $amount = $this->database->getBetHiloFirstRollBetAmount($user_id);
+        $fRoll = $this->database->getBetHiloFirstRoll($user_id);
+        $sRoll = Roll::UniqueZeroToOneHundred($fRoll);
+        if ($sRoll > $fRoll){
+            //won
+            $winAmount = $this->_getBetHiloPayout($amount);
+            $this->database->addCoinsToUser($user_id,$winAmount);
+            $this->database->updateBetHiloTurn($user_id,'high',$sRoll,$winAmount);
+            $msg = "Congrats {$event->getNick()}, You won $winAmount coins with a roll of $sRoll";
+            $queue->ircNotice($event->getNick(), $msg);
+        }else{
+            //loss
+            $this->database->updateBetHiloTurn($user_id,'high',$sRoll,$amount *-1);
+            $msg = "You lost $amount coins with a roll of $sRoll";
+            $queue->ircNotice($event->getNick(), $msg);
+        }
+    }
+
+    public function lowCallback(CommandCallback $callback)
+    {
+        $queue = $callback->eventQueue;
+        $event = $callback->commandEvent;
+        $user =  $callback->user;
+        $source = $event->getSource();
+        $nick = $user->nick;
+        // is the user in a valid state
+        $response = $user->isValidIrc();
+        if (!$response->value){
+            foreach ($response->getErrors() as $error){
+                $queue->ircNotice($user->nick,$error);
+            }
+            return;
+        }
+        $user_id = $this->database->getUserIdByNick($nick);
+        $amount = $this->database->getBetHiloFirstRollBetAmount($user_id);
+        $fRoll = $this->database->getBetHiloFirstRoll($user_id);
+        $sRoll = Roll::UniqueZeroToOneHundred($fRoll);
+        if ($sRoll < $fRoll){
+            //won
+            $winAmount = $this->_getBetHiloPayout($amount);
+            $this->database->addCoinsToUser($user_id,$winAmount);
+            $this->database->updateBetHiloTurn($user_id,'high',$sRoll,$winAmount);
+            $msg = "Congrats {$event->getNick()}, You won $winAmount coins with a roll of $sRoll";
+            $queue->ircNotice($event->getNick(), $msg);
+        }else{
+            //loss
+            $this->database->updateBetHiloTurn($user_id,'high',$sRoll,$amount *-1);
+            $msg = "You lost $amount coins with a roll of $sRoll";
+            $queue->ircNotice($event->getNick(), $msg);
+        }
+    }
+
 
     /**
      * @param CommandEvent $event
@@ -285,34 +403,7 @@ class BetPlugin extends AbstractPlugin
 
     }
 
-    /**
-     * @param CommandEvent $event
-     * @param Queue $queue
-     */
-    public function highCommand(CommandEvent $event, Queue $queue)
-    {
 
-    }
-
-    /**
-     * @param CommandEvent $event
-     * @param Queue $queue
-     */
-    public function lowCommand(CommandEvent $event, Queue $queue)
-    {
-
-    }
-
-
-    private function _handleHiloHighCommand()
-    {
-
-    }
-
-    private function _handleHiloLowCommand()
-    {
-
-    }
 
     /**
      * @param $roll
@@ -327,12 +418,11 @@ class BetPlugin extends AbstractPlugin
     }
 
     /**
-     * @param $roll
+     * @param $amount
      * @return int
      */
-    private function _getBetHiloMultiplier($roll)
+    private function _getBetHiloPayout($amount)
     {
-        // find bet
-        return -1;
+        return floor($amount * 1.5);
     }
 }

@@ -8,6 +8,7 @@
 
 namespace Freestyledork\Phergie\Plugin\Coins\Utils;
 
+use Freestyledork\Phergie\Plugin\Coins\Config\Settings;
 
 class Roll
 {
