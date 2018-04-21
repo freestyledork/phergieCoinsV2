@@ -161,10 +161,12 @@ class LottoPlugin extends AbstractPlugin
         for($i = 0; $i<$buyAmount; $i++)
         {
             $ticket = $this->database->addNewUserTicket($user_id);
+            $this->database->removeCoinsFromUser($user_id,Settings::LOTTO_TICKET_COST);
             $won = $this->database->isWinningTicket($ticket);
             if ($won){
                 $prize = $this->database->getGrandPrizeAmount();
                 $msg = "{$nick} CONGRATS! You won the lotto with a grand prize of {$prize} coins!";
+                $this->database->addCoinsToUser($user_id,$prize);
                 $queue->ircPrivmsg($source, $msg);
                 break;
             }

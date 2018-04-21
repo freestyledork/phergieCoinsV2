@@ -15,5 +15,43 @@ use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
 
 class MineModel extends UserModel
 {
+    public function __construct(array $config = [])
+    {
+        parent::__construct($config);
+    }
+
+    public function getLevel($exp){
+        $statement = $this->connection->prepare(
+            'SELECT level
+                        FROM levels
+                       WHERE required_exp >= :exp
+                    ORDER BY required_exp ASC
+                       LIMIT 1'
+        );
+        if ($statement->execute([ ':exp' => $exp ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    public function getUserMineExp($user_id)
+    {
+        $statement = $this->connection->prepare(
+            'SELECT mine_exp
+                        FROM users
+                       WHERE user_id >= :user_id
+                       LIMIT 1'
+        );
+        if ($statement->execute([ ':user_id' => $user_id ])) {
+            $result = $statement->fetchColumn();
+        }
+        return $result;
+    }
+
+    public function getUserMineLevel($user_id){
+        $exp = $this->getUserMineExp($user_id);
+        return $this->getLevel($exp);
+    }
+
 
 }

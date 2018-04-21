@@ -15,5 +15,8 @@ use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
 
 class CraftModel extends UserModel
 {
-
+    public function __construct(array $config = [])
+    {
+        parent::__construct($config);
+    }
 }
