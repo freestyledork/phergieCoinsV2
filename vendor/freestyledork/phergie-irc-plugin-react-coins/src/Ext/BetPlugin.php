@@ -217,7 +217,7 @@ class BetPlugin extends AbstractPlugin
             //finish old turn
             $roll = $this->database->getBetHiloFirstRoll($user_id);
             // validate second command
-            $msg = "Your first roll was {$roll}. Please choose if your next roll will be <high> or <low>";
+            $msg = "Your first roll was {$roll}. Please choose if your next roll will be [high]er or [low]er";
             $queue->ircNotice($nick,$msg);
         }
 
@@ -397,7 +397,7 @@ class BetPlugin extends AbstractPlugin
         $winRate = floor(($this->database->getUserTotalBetWins($user_id)/$totalBets)*100);
 
         // send message
-        $msg  = "[Total Bets] {$totalBets} [Last] {$lastBet} [Biggest Win] {$mostWon}";
+        $msg  = "[Total Bets] {$totalBets} [Last] {$lastBet} [Biggest Win] {$mostWon} ";
         $msg .= "[Biggest Loss] {$mostLost} [Win Rate] {$winRate}%";
         $queue->ircPrivmsg($event->getSource(), $msg);
 

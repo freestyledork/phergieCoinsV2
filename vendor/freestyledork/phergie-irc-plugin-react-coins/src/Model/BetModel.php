@@ -166,9 +166,9 @@ class BetModel extends UserModel
     public function getUserMostWon($user_id)
     {
         $statement = $this->connection->prepare(
-            'SELECT payout FROM bets WHERE user_id = :user_id
+            'SELECT payout FROM bets WHERE user_id = :user_id AND payout > 0
                        UNION
-                      SELECT payout FROM bets_hilo WHERE user_id = :user_id 
+                      SELECT payout FROM bets_hilo WHERE user_id = :user_id AND payout > 0
                     ORDER BY payout DESC LIMIT 1'
         );
         if ($statement->execute([ ':user_id' => $user_id ])) {
@@ -185,10 +185,10 @@ class BetModel extends UserModel
     {
         $statement = $this->connection->prepare(
             'SELECT payout FROM bets 
-                       WHERE user_id = :user_id AND payout IS NOT NULL
+                       WHERE user_id = :user_id AND payout IS NOT NULL AND payout < 0
                        UNION 
                       SELECT payout FROM bets_hilo 
-                       WHERE user_id = :user_id AND payout IS NOT NULL 
+                       WHERE user_id = :user_id AND payout IS NOT NULL AND payout < 0
                     ORDER BY payout ASC LIMIT 1'
         );
         if ($statement->execute([ ':user_id' => $user_id ])) {
@@ -222,10 +222,13 @@ class BetModel extends UserModel
     public function isBetValid($amount, $user_id){
         $response = new Response(true);
         $betAmount = $amount;
-        $elapsedTime = Time::timeElapsedInSeconds($this->getUserLastBetTime($user_id));
+        $elapsedTime = $this->getUserLastBetTime($user_id);
+        if ($elapsedTime){
+            $elapsedTime = Time::timeElapsedInSeconds($elapsedTime);
+        }
 
         // check last bet time
-        if ($elapsedTime < Settings::BET_INTERVAL && $elapsedTime !== NULL){
+        if ($elapsedTime < Settings::BET_INTERVAL && $elapsedTime !== FALSE){
             $remaining = Format::formatTime( Settings::BET_INTERVAL - $elapsedTime);
             $response->value = false;
             $response->addError("you must wait {$remaining} before betting again!");

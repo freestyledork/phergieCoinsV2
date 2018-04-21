@@ -40,6 +40,8 @@ class Plugin extends AbstractPlugin
         'command.coins.info'    => 'coinsInfoCommand',
         'command.bank'          => 'bankCommand',
         'command.bank.info'     => 'bankInfoCommand',
+        'command.rank'          => 'rankCommand',
+        'command.coins.rank'    => 'rankCommand',
     ];
 
     /**
@@ -470,5 +472,30 @@ class Plugin extends AbstractPlugin
         // return info to chat
         $msg ="[Available] {$available} [Banked] {$bankedAmount} [Total] {$worth}";
         $queue->ircPrivmsg($source, $msg);
+    }
+
+    public function rankCommand(CommandEvent $event, Queue $queue)
+    {
+        $source = $event->getSource();
+        $params = $event->getCustomParams();
+
+        // decide who to target
+        if (count($params) == 0){
+            // do short rank list
+            $msg = "rank is WIP";
+            $queue->ircPrivmsg($source, $msg);
+
+        }else {
+            // do rank for single user
+            $nick = $params[0];
+            // check user exists
+            $user_id = $this->database->getUserIdByNick($nick);
+            if (!$user_id){
+                $queue->ircPrivmsg($source, "I don't know anyone named {$nick}!");
+                return;
+            }
+            $msg = "rank is WIP";
+            $queue->ircPrivmsg($source, $msg);
+        }
     }
 }
