@@ -193,6 +193,9 @@ class BetModel extends UserModel
         );
         if ($statement->execute([ ':user_id' => $user_id ])) {
             $result = $statement->fetchColumn();
+            if ($result){
+                $result = abs($result);
+            }
         }
         return $result;
     }

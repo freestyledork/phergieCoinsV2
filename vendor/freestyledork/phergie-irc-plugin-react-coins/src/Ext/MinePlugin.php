@@ -106,6 +106,14 @@ class MinePlugin extends AbstractPlugin
     {
         Log::Command($this->getLogger(),$event);
 
+        //TODO pre-validation
+        $user_id = $this->database->getUserIdByNick($event->getNick());
+        if (!$user_id){
+            $msg = "Sorry {$event->getNick()}, you must use coins command before attempting to mine.";
+            $queue->ircNotice($event->getNick(), $msg);
+            return;
+        }
+
         $callback = new CommandCallback($event,$queue ,strtolower($event->getNick()));
         $this->getEventEmitter()->emit($callback->getAuthCallbackEventName(),[$callback]);
     }

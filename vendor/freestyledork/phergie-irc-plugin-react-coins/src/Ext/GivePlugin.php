@@ -125,8 +125,9 @@ class GivePlugin extends AbstractPlugin
             return;
         }
         // check last bet time
-        $elapsedTime = Time::timeElapsedInSeconds($this->database->getUserLastGiveTime($user_id));
-        if ($elapsedTime < Settings::GIVE_INTERVAL && $elapsedTime !== NULL){
+        $lastGive = $this->database->getUserLastGiveTime($user_id);
+        $elapsedTime = Time::timeElapsedInSeconds($lastGive);
+        if ($elapsedTime < Settings::GIVE_INTERVAL && $elapsedTime !== NULL && $lastGive){
             $remaining = Format::formatTime( Settings::BET_INTERVAL - $elapsedTime);
             $msg = "you must wait {$remaining} before you can give again!";
             $queue->ircNotice($event->getNick(), $msg);

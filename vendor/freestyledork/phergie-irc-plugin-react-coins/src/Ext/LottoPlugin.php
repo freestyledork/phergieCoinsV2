@@ -184,7 +184,9 @@ class LottoPlugin extends AbstractPlugin
         $sold = $this->database->getTotalTickets();
         $days = $this->database->getDaysSinceLastWin();
         $players = $this->database->getTotalPlayers();
-        $msg = "[Grand Prize] {$prize} [Players] {$players} [Tickets Sold] {$sold} [Duration] {$days} Day(s)";
+        $tTicket = $this->database->getTodayTicket();
+        $msg = "[Grand Prize] {$prize} [Players] {$players} [Tickets Sold] {$sold} ";
+        $msg .= "[Today's Ticket] {$tTicket} [Duration] {$days} Day(s)";
         $queue->ircPrivmsg($event->getSource(), $msg);
     }
 
