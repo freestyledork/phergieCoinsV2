@@ -70,6 +70,4 @@ class CollectionModel extends UserModel
         return $result;
     }
 
-
-
 }
