@@ -169,6 +169,10 @@ class LottoPlugin extends AbstractPlugin
                 break;
             }
         }
+        if (!$won){
+            $msg = "You successfully bought $buyAmount tickets!";
+            $queue->ircPrivmsg($source, $msg);
+        }
     }
 
     /**
