@@ -18,6 +18,7 @@ use Freestyledork\Phergie\Plugin\Coins\Ext\LottoPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\MinePlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\StealPlugin;
 use Freestyledork\Phergie\Plugin\Coins\Ext\InventoryPlugin;
+use Freestyledork\Phergie\Plugin\Coins\Ext\GivePlugin;
 
 
 $prefix      = '!';
@@ -71,6 +72,7 @@ $mine       = new MinePlugin($config);
 $steal      = new StealPlugin($config);
 $lotto      = new LottoPlugin($config);
 $inventory  = new InventoryPlugin($config);
+$give       = new GivePlugin($config);
 $quit       = new QuitPlugin(['message' => 'because %s said so']);
 
 
@@ -101,7 +103,8 @@ return array(
         $craft,
         $steal,
         $lotto,
-        $inventory
+        $inventory,
+        $give
     ),
     // Connections
     'connections' => array(
