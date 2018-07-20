@@ -8,6 +8,7 @@
 
 namespace Freestyledork\Phergie\Plugin\Coins\Ext;
 
+use Freestyledork\Phergie\Plugin\Coins\Utils\Roll;
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEventInterface as CommandEvent;
@@ -26,7 +27,9 @@ class MinePlugin extends AbstractPlugin
      * @var array
      */
     protected $commandEvents = [
-        'command.mine'         => 'mineCommand',
+        'command.mine'          => 'mineCommand',
+        'command.mine.level'    => 'mineLevelCommand',
+
     ];
 
     /**
@@ -156,6 +159,34 @@ class MinePlugin extends AbstractPlugin
         $factory = $this->getEventQueueFactory();
         $queue = $factory->getEventQueue($this->connection);
         $queue->ircPrivmsg("#FSDChannel","tick");
+    }
+
+    public function attemptMine($lvl)
+    {
+        // pick a type
+        $tRoll = mt_rand(0,1);
+        if ($tRoll == 0){
+            $this->attemptMineGem($lvl);
+        } else {
+            $this->attempMineMetal($lvl);
+        }
+
+    }
+
+    public function attemptMineGem($lvl)
+    {
+        // check if successful attempt
+        $continue = Roll::Success(.5);
+        if (!$continue) return; // failed
+
+        // pick gem
+        $gems = $this->database->getAllGems();
+
+    }
+
+    public function attempMineMetal($lvl)
+    {
+
     }
 
 }

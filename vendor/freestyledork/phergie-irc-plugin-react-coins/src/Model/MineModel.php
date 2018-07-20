@@ -53,5 +53,20 @@ class MineModel extends UserModel
         return $this->getLevel($exp);
     }
 
+    /**
+     * get an array of [gem_id] & [name] for all gems
+     *
+     * @return array
+     */
+    public function getAllGems(){
+        $statement = $this->connection->prepare(
+            'SELECT gem_id, name
+                        FROM gems'
+        );
+        if ($statement->execute()) {
+            $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        }
+        return $result;
+    }
 
 }
