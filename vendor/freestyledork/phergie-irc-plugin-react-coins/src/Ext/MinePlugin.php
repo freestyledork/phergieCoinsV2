@@ -17,7 +17,7 @@ use Freestyledork\Phergie\Plugin\Coins\Helper\CommandCallback;
 use Freestyledork\Phergie\Plugin\Coins\Utils\Log;
 use React\EventLoop\LoopInterface;
 use Phergie\Irc\ConnectionInterface;
-use React\EventLoop\Timer\TimerInterface;
+use React\EventLoop\TimerInterface;
 
 class MinePlugin extends AbstractPlugin
 {
@@ -28,7 +28,7 @@ class MinePlugin extends AbstractPlugin
      */
     protected $commandEvents = [
         'command.mine'          => 'mineCommand',
-        'command.mine.level'    => 'mineLevelCommand',
+//        'command.mine.level'    => 'mineLevelCommand',
 
     ];
 
@@ -151,7 +151,7 @@ class MinePlugin extends AbstractPlugin
     public function addConnection(ConnectionInterface $connection)
     {
         $this->connection = $connection;
-        //$this->loop->addPeriodicTimer(30, array($this, 'myTimerCallback'));
+        $this->loop->addPeriodicTimer(30, array($this, 'myTimerCallback'));
     }
 
     public function myTimerCallback(TimerInterface $timer)
